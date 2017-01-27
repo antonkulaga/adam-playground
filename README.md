@@ -1,2 +1,4 @@
-# adam-playground
-Collection of some function to deal with ADAM
+ADAM playground
+===============
+
+Just a collection of implicit classes and helper functions that were side effect of my using ADAM.
