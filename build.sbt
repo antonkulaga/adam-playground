@@ -6,7 +6,7 @@ import sbt._
 
 name := "adam-playground"
 
-organization := "org.comp.bio.aging"
+organization := "comp.bio.aging"
 
 scalaVersion :=  "2.11.8"
 
@@ -18,7 +18,7 @@ javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint", "-J-Xss5M", "
 
 javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled")
 
-mainClass in Compile := Some("org.comp.bio.aging.extractor.Main")
+mainClass in Compile := Some("comp.bio.aging.extractor.Main")
 
 resourceDirectory in Test := baseDirectory { _ / "files" }.value
 
