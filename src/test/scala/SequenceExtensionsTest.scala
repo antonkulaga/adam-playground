@@ -1,11 +1,7 @@
+import comp.bio.aging.playground.extensions.stringSeqExtensions._
 import org.scalatest.{Matchers, WordSpec}
 
-import org.bdgenomics.utils.misc
-import com.holdenkarau.spark.testing
-
 class SequenceExtensionsTest extends WordSpec with Matchers {
-
-  import org.comp.bio.aging.playground.extensions.stringext._
 
   val str = "ATTCGCGAGCTAGCTAGCGTAC"
   val cmp = "TAAGCGCTCGATCGATCGCATG"

@@ -1,4 +1,4 @@
-package org.comp.bio.aging.playground.extensions
+package comp.bio.aging.playground.extensions
 
 import org.bdgenomics.adam.models._
 import org.bdgenomics.formats.avro._

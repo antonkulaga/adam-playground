@@ -1,4 +1,5 @@
-package org.comp.bio.aging.playground.extensions
+package comp.bio.aging.playground.extensions
+
 import org.apache.spark
 import org.apache.spark.rdd.RDD
 import org.bdgenomics.adam.models.{ReferenceRegion, _}

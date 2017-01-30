@@ -1,5 +1,4 @@
-package org.comp.bio.aging.playground
-
+package comp.bio.aging.playground
 
 import org.apache.spark
 import org.apache.spark.rdd.RDD

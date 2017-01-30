@@ -46,7 +46,9 @@ libraryDependencies ++= Seq(
 
   "org.scalatest" %% "scalatest" % "3.0.1" % Test,
 
-  "com.holdenkarau" %% "spark-testing-base" % "2.0.2_0.6.0" % Test
+  "com.holdenkarau" %% "spark-testing-base" % "2.1.0_0.6.0" % Test,
+
+  "org.scalacheck" %% "scalacheck" % "1.13.4" % Test
 )
 
 libraryDependencies += "com.lihaoyi" % "ammonite" % "0.8.2" % Test cross CrossVersion.full
