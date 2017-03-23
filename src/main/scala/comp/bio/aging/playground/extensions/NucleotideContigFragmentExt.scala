@@ -12,7 +12,8 @@ class NucleotideContigFragmentExt(val fragment: NucleotideContigFragment) extend
 
   def regionOpt = ReferenceRegion(fragment)
 
-  def hasRegion = regionOpt.isDefined
+  def hasRegion: Boolean = regionOpt.isDefined
 
-  def region = regionOpt.get
+  def region: ReferenceRegion = regionOpt.get
+
 }

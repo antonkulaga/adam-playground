@@ -19,6 +19,7 @@ Contig Extensions
 * search in the genome
 * search by feature
 * region extraction from the fragment
+* extract multiple regions at once
 
 String extensions
 -----------------
@@ -33,5 +34,5 @@ add the following to you build.sbt
 
 ```sbt
 resolvers += sbt.Resolver.bintrayRepo("comp-bio-aging", "main")
-libraryDependencies += "comp.bio.aging" %% "adam-playground" % "0.0.2"
+libraryDependencies += "comp.bio.aging" %% "adam-playground" % "0.0.3"
 ```

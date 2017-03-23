@@ -38,17 +38,19 @@ libraryDependencies ++= Seq(
 
   "org.bdgenomics.adam" %% "adam-core-spark2" % "0.21.0",
 
-  "org.bdgenomics.utils" %% "utils-misc" % "0.2.11",
+  "org.bdgenomics.utils" %% "utils-misc" % "0.2.13",
 
-  "org.bdgenomics.utils" %% "utils-misc-spark2" % "0.2.11",
+  "org.bdgenomics.utils" %% "utils-misc-spark2" % "0.2.13",
 
-  "org.bdgenomics.utils" %% "utils-intervalrdd-spark2" % "0.2.11",
+  "org.bdgenomics.utils" %% "utils-intervalrdd-spark2" % "0.2.13",
+
+  "org.bdgenomics.utils" %% "utils-misc" % "0.2.13" % Test,
 
   "org.scalatest" %% "scalatest" % "3.0.1" % Test,
 
   "com.holdenkarau" %% "spark-testing-base" % "2.1.0_0.6.0" % Test,
 
-  "org.scalacheck" %% "scalacheck" % "1.13.4" % Test
+  "org.scalacheck" %% "scalacheck" % "1.13.5" % Test
 )
 
 libraryDependencies += "com.lihaoyi" % "ammonite" % "0.8.2" % Test cross CrossVersion.full

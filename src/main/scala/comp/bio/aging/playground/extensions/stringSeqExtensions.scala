@@ -29,6 +29,7 @@ object stringSeqExtensions {
       case index => inclusionsInto(where, index +1, index :: acc)
     }
 
+
     /*
     @tailrec final def inclusionsIntoKMP(where: String,
                                          start: Int = 0,

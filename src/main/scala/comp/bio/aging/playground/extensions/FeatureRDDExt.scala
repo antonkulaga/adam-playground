@@ -40,13 +40,15 @@ class FeatureRDDExt(val features: FeatureRDD) {
     }
   }
 
-  def ofType(tp: String) = features.transform(rdd=>rdd.filter(f=>f.getFeatureType==tp))
+  def ofType(tp: String): FeatureRDD = features.transform(rdd=>rdd.filter(f=>f.getFeatureType==tp))
 
-  def transcripts = ofType("transcript")
+  def transcripts: FeatureRDD = ofType("transcript")
 
-  def genes = ofType("gene")
+  def genes: FeatureRDD = ofType("gene")
 
-  def exons = ofType("exon")
+  def exons: FeatureRDD = ofType("exon")
+
+  def byStrand(strand: Strand) = features.rdd.filter(f=>f.getStrand == Strand.INDEPENDENT || f.getStrand == Strand.UNKNOWN)
 
   def byType: RDD[(String, Iterable[Feature])] = features.rdd.groupBy(f=>f.getFeatureType)
 
