@@ -17,7 +17,7 @@ import scala.math.max
 class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD) extends AnyVal{
 
 
-  def transformSequences(collectFunction: PartialFunction[SequenceRecord, SequenceRecord]) = {
+  def transformSequences(collectFunction: PartialFunction[SequenceRecord, SequenceRecord]): NucleotideContigFragmentRDD = {
     val newDic = new SequenceDictionary(fragments.sequences.records.collect(collectFunction))
     fragments.copy(sequences = newDic)
   }
@@ -38,33 +38,32 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
     (reg, str)
   }
 
+  def extractRegions(regions: List[ReferenceRegion]): RDD[(ReferenceRegion, String)] = {
 
-  protected def reduceRegionSequences(
-                   kv1: (ReferenceRegion, String),
-                   kv2: (ReferenceRegion, String)): (ReferenceRegion, String) = {
-    assert(kv1._1.isAdjacent(kv2._1), "Regions being joined must be adjacent. For: " +
-      kv1 + ", " + kv2)
+    def reduceRegionSequences(
+                               kv1: (ReferenceRegion, String),
+                               kv2: (ReferenceRegion, String)): (ReferenceRegion, String) = {
+      assert(kv1._1.isAdjacent(kv2._1), "Regions being joined must be adjacent. For: " +
+        kv1 + ", " + kv2)
 
-    (kv1._1.merge(kv2._1), if (kv1._1.compareTo(kv2._1) <= 0) {
-      kv1._2 + kv2._2
-    } else {
-      kv2._2 + kv1._2
-    })
-  }
+      (kv1._1.merge(kv2._1), if (kv1._1.compareTo(kv2._1) <= 0) {
+        kv1._2 + kv2._2
+      } else {
+        kv2._2 + kv1._2
+      })
+    }
 
+    val byRegion = fragments.rdd.keyBy(ReferenceRegion(_))
+    val places: RDD[(ReferenceRegion, (ReferenceRegion, String))] = byRegion
+        .flatMap{
+          case (Some(reg), fragment) if  regions.exists(reg.overlaps) =>
+            regions.collect{
+              case region if reg.overlaps(region) => (region, trimStringByRegion((reg, fragment), region))
+            }
 
-  def extractRegions(regions: List[ReferenceRegion]): RDD[(ReferenceRegion, (ReferenceRegion, String))] = {
-      val byRegion = fragments.rdd.keyBy(ReferenceRegion(_))
-      val places: RDD[(ReferenceRegion, (ReferenceRegion, String))] = byRegion
-          .flatMap{
-            case (Some(reg), fragment) if  regions.exists(reg.overlaps) =>
-              regions.collect{
-                case region if reg.overlaps(region) => (region, trimStringByRegion((reg, fragment), region))
-              }
-
-            case _ => Nil
-          }
-      places.reduceByKey(reduceRegionSequences)
+          case _ => Nil
+        }
+    places.reduceByKey(reduceRegionSequences).mapValues{ case (_, str) => str}
   }
 
   /**
@@ -101,7 +100,7 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
     features.filterByContainedRegions(regions)
   }
 
-  def saveContig(path: String, name: String) ={
+  def saveContig(path: String, name: String): Unit ={
     val filtered = fragments.transform(tr=>tr.filter(c=>c.getContig.getContigName==name))
     val cont = filtered.transformSequences{ case s if s.name==name => s }
     cont.saveAsParquet(s"${path}/${name}.adam")

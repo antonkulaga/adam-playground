@@ -67,7 +67,6 @@ class ExtensionsTests extends WordSpec with Matchers with SharedSparkContext {
       val fragments = new NucleotideContigFragmentRDD(frags, dic)
       val byRegion = fragments.rdd.keyBy(ReferenceRegion(_))
 
-
       val regions = List(
         new ReferenceRegion(contig().getContigName, 0, 5),
         new ReferenceRegion(contig().getContigName, 25, 35),
@@ -88,9 +87,9 @@ class ExtensionsTests extends WordSpec with Matchers with SharedSparkContext {
       pprint.pprintln(places.collect().toList)
 
 
-      val results= fragments.extractRegions(regions).collect().toSet
+      val results: Set[(ReferenceRegion, String)] = fragments.extractRegions(regions).collect().toSet
 
-      val seqs= regions.zip(regions.zip(List("ACAGC", "GGGTTCAGCT", "CCAGATATGA", "CCATGGGTTTCCAGAAGTTT"))).toSet
+      val seqs= regions.zip(List("ACAGC", "GGGTTCAGCT", "CCAGATATGA", "CCATGGGTTTCCAGAAGTTT")).toSet
       seqs shouldEqual results
     }
   }
