@@ -1,6 +1,5 @@
 package comp.bio.aging.playground
 
-
 object Main {
 
   def time[R](name: String)(block: => R): (R, Long) = {
@@ -13,7 +12,7 @@ object Main {
     (result, span)
   }
 
-  def writeTime(name: String, millis: Long) = {
+  def writeTime(name: String, millis: Long): Long = {
     val totalSecs = millis / 1000
     val hours = totalSecs / 3600
     val minutes = (totalSecs % 3600) / 60

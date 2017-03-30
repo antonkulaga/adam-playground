@@ -48,15 +48,15 @@ class FeatureRDDExt(val features: FeatureRDD) {
 
   def exons: FeatureRDD = ofType("exon")
 
-  def byStrand(strand: Strand) = features.rdd.filter(f=>f.getStrand == Strand.INDEPENDENT || f.getStrand == Strand.UNKNOWN)
+  def byStrand(strand: Strand): RDD[Feature] = features.rdd.filter(f=>f.getStrand == Strand.INDEPENDENT || f.getStrand == Strand.UNKNOWN)
 
   def byType: RDD[(String, Iterable[Feature])] = features.rdd.groupBy(f=>f.getFeatureType)
 
-  def filterAttributes(filterFun: scala.collection.Map[String, String] => Boolean) = features.transform(rdd =>
+  def filterAttributes(filterFun: scala.collection.Map[String, String] => Boolean): FeatureRDD = features.transform(rdd =>
     rdd.filter{ f=> filterFun(f.getAttributes.asScala) }
   )
 
-  def filterByAttribute(name: String)(filterFun: String => Boolean) =features.transform(rdd =>
+  def filterByAttribute(name: String)(filterFun: String => Boolean): FeatureRDD =features.transform(rdd =>
     rdd.filter{ f=> f.getAttributes.containsKey(name) && filterFun(f.getAttributes.get(name)) }
   )
 
@@ -65,7 +65,7 @@ class FeatureRDDExt(val features: FeatureRDD) {
     filtered.transformSequences{ case s if s.name==name => s }
   }
 
-  def saveContigFeatures(path: String, name: String) ={
+  def saveContigFeatures(path: String, name: String): Unit ={
     this.byContig(name).saveAsParquet(s"${path}/${name}Features.adam")
   }
 

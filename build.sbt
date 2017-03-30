@@ -32,9 +32,13 @@ resolvers += sbt.Resolver.bintrayRepo("denigma", "denigma-releases")
 
 resolvers += "ICM repository" at "http://maven.icm.edu.pl/artifactory/repo"
 
+lazy val sparkVersion = "2.1.0"
+
 libraryDependencies ++= Seq(
   
-  "org.apache.spark" %% "spark-core" % "2.0.2",
+  "org.apache.spark" %% "spark-core" % sparkVersion,
+
+  "org.apache.spark" %% "spark-sql" % sparkVersion,
 
   "org.bdgenomics.adam" %% "adam-core-spark2" % "0.21.0",
 

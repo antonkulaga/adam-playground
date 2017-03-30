@@ -4,7 +4,7 @@ package comp.bio.aging.playground
 import java.net.URL
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import org.bdgenomics.adam.models.{ReferenceRegion, SequenceDictionary}
+import org.bdgenomics.adam.models.{ReferenceRegion, SequenceDictionary, SequenceRecord}
 import org.bdgenomics.adam.rdd.contig.NucleotideContigFragmentRDD
 import org.bdgenomics.formats.avro.{Contig, NucleotideContigFragment}
 import comp.bio.aging.playground.extensions._
@@ -33,6 +33,10 @@ class ExtensionsTests extends WordSpec with Matchers with SharedSparkContext {
     "CAGCTGATCTCCAGATATGACCATGGGTTT",
     "CCAGAAGTTTGAGCCACAAACCCATGGTCA")
 
+  val merged = dnas.reduce(_ + _)
+
+  val record = SequenceRecord("test", merged.length)
+
   def contig() = {
     val c= new Contig()
     c.setContigName("test")
@@ -60,11 +64,13 @@ class ExtensionsTests extends WordSpec with Matchers with SharedSparkContext {
 
 
   "Extended nucleotide fragments RDD" should {
-    "find right regions" in {
-      val dic = new SequenceDictionary()
-      val frags = sc.parallelize(dnas2fragments(dnas))
 
+    "find right regions" in {
+
+      val dic = new SequenceDictionary(Vector(record))
+      val frags = sc.parallelize(dnas2fragments(dnas))
       val fragments = new NucleotideContigFragmentRDD(frags, dic)
+
       val byRegion = fragments.rdd.keyBy(ReferenceRegion(_))
 
       val regions = List(
@@ -83,14 +89,31 @@ class ExtensionsTests extends WordSpec with Matchers with SharedSparkContext {
 
           case _ => Nil
         }
-      println("===========")
-      pprint.pprintln(places.collect().toList)
-
-
       val results: Set[(ReferenceRegion, String)] = fragments.extractRegions(regions).collect().toSet
-
       val seqs= regions.zip(List("ACAGC", "GGGTTCAGCT", "CCAGATATGA", "CCATGGGTTTCCAGAAGTTT")).toSet
       seqs shouldEqual results
+    }
+
+    "find regions for sequences" in {
+
+      val dic = new SequenceDictionary(Vector(record))
+      val frags = sc.parallelize(dnas2fragments(dnas))
+      val fragments = new NucleotideContigFragmentRDD(frags, dic)
+
+      //val seqs = List("ACAGC", "GGGTTCAGCT", "CCAGATATGA", "CCATGGGTTTCCAGAAGTTT")
+      val seqs = List("ACAGC" ,"CAGCTG", "TGAGCCACAAACCC")
+
+      val regs: RDD[(String, List[ReferenceRegion])] = fragments.findRegions(seqs, false)
+      val regions = regs.values.collect().toList.flatten
+      val extracted = fragments.extractRegions(regions)
+      extracted.values.collect.toSet shouldEqual seqs.toSet
+
+      val seqsSpecial = List("NGG")
+      val special = fragments.findSpecialRegions(seqsSpecial)(stringSeqExtensions.seqsInclusionsInto)
+      val regionsSpecial = special.values.collect().toList.flatten
+      val extractedSpecial = fragments.extractRegions(regionsSpecial)
+      extractedSpecial.values.collect.toSet shouldEqual Set("TGG", "GGG")
+
     }
   }
 

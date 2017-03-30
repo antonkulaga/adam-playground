@@ -8,7 +8,7 @@ import org.bdgenomics.adam.rdd.feature.FeatureRDD
 import org.bdgenomics.formats.avro._
 import org.bdgenomics.adam.rdd.ADAMContext._
 import comp.bio.aging.playground.extensions.stringSeqExtensions._
-
+import comp.bio.aging.playground.extensions._
 import scala.collection.JavaConverters._
 import scala.collection.immutable._
 import scala.math.max
@@ -38,14 +38,31 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
     (reg, str)
   }
 
+
+  def findRegions(sequences: List[String], flank: Boolean = false): RDD[(String, List[ReferenceRegion])] = {
+    val frags = if(flank) flankFrom(sequences:_*) else fragments
+    frags.rdd.flatMap{ frag =>
+      val subregions = sequences.map{  str=> str -> frag.subregions(str) }
+      subregions
+    }.reduceByKey(_ ++ _)
+  }
+
+  def findSpecialRegions(sequences: List[String], flank: Boolean = false)
+                        (inclusionsInto: (String, String) => List[Int]): RDD[(String, List[ReferenceRegion])] = {
+    val frags = if(flank) flankFrom(sequences:_*) else fragments
+    frags.rdd.flatMap{ frag =>
+      val subregions = sequences.map{  str=> str -> frag.subregions(str, inclusionsInto) }
+      subregions
+    }.reduceByKey(_ ++ _)
+  }
+
+  def extractRegions(regions: Array[ReferenceRegion]): RDD[(ReferenceRegion, String)] = extractRegions(regions.toList)
+
   def extractRegions(regions: List[ReferenceRegion]): RDD[(ReferenceRegion, String)] = {
 
     def reduceRegionSequences(
                                kv1: (ReferenceRegion, String),
                                kv2: (ReferenceRegion, String)): (ReferenceRegion, String) = {
-      assert(kv1._1.isAdjacent(kv2._1), "Regions being joined must be adjacent. For: " +
-        kv1 + ", " + kv2)
-
       (kv1._1.merge(kv2._1), if (kv1._1.compareTo(kv2._1) <= 0) {
         kv1._2 + kv2._2
       } else {
@@ -53,7 +70,7 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
       })
     }
 
-    val byRegion = fragments.rdd.keyBy(ReferenceRegion(_))
+    val byRegion: RDD[(Option[ReferenceRegion], NucleotideContigFragment)] = fragments.rdd.keyBy(ReferenceRegion(_))
     val places: RDD[(ReferenceRegion, (ReferenceRegion, String))] = byRegion
         .flatMap{
           case (Some(reg), fragment) if  regions.exists(reg.overlaps) =>
@@ -63,6 +80,14 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
 
           case _ => Nil
         }
+
+    val byKey =  places.groupByKey
+      .filter{
+        case (_, iter) if iter.size >= 2 =>
+          iter.sliding(2).map(i=>(i.head, i.tail.head)).exists{ case ((one,_), (two, _))=> !one.isAdjacent(two)}
+        case _ => false
+      }.mapValues(_.toList.map(_._1))
+
     places.reduceByKey(reduceRegionSequences).mapValues{ case (_, str) => str}
   }
 
@@ -83,9 +108,13 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
     fragments.extract(region)
   }
 
-  def search(sequence: String, flank: Boolean = true): RDD[ReferenceRegion] = {
-    val rdd: RDD[NucleotideContigFragment] = if (flank) fragments.flankAdjacentFragments(sequence.length - 1).rdd else fragments.rdd
-    val found = rdd.collect{
+  def flankFrom(sequences: String*): NucleotideContigFragmentRDD = sequences.maxBy(_.length).length - 1 match {
+    case value if value > 0 => fragments.flankAdjacentFragments(value)
+    case _ => fragments
+  }
+
+  def search(sequence: String): RDD[ReferenceRegion] = {
+    val found = fragments.rdd.collect{
       case frag if frag.hasRegion && frag.getFragmentSequence.contains(sequence) =>
         val region = frag.region
         sequence.inclusionsInto(frag.getFragmentSequence)
