@@ -9,6 +9,10 @@ import org.bdgenomics.formats.avro._
 import org.bdgenomics.adam.rdd.ADAMContext._
 import comp.bio.aging.playground.extensions.stringSeqExtensions._
 
+/**
+  * Extensions to NucleotideContigFragment
+  * @param fragment
+  */
 class NucleotideContigFragmentExt(val fragment: NucleotideContigFragment) extends AnyVal{
 
   def regionOpt = ReferenceRegion(fragment)
@@ -16,6 +20,19 @@ class NucleotideContigFragmentExt(val fragment: NucleotideContigFragment) extend
   def hasRegion: Boolean = regionOpt.isDefined
 
   def region: ReferenceRegion = regionOpt.get
+
+  def overlaps(otherRegion: ReferenceRegion): Boolean = hasRegion && region.overlaps(otherRegion)
+
+  def overlaps(otherFragment: NucleotideContigFragment): Boolean = otherFragment.hasRegion &&
+    overlaps(otherFragment.region)
+
+
+  def sequenceByRegion(otherRegion: ReferenceRegion): Option[String] = if(region.overlaps(otherRegion)){
+    val reg = region.intersection(otherRegion)
+    val start = (reg.start - fragment.getFragmentStartPosition).toInt
+    val end = (reg.end - fragment.getFragmentStartPosition).toInt
+    Some(fragment.getFragmentSequence.substring(start, end))
+  } else None
 
   def subfragments(substring: String): List[NucleotideContigFragment] = {
     substring.inclusionsInto(fragment.getFragmentSequence).map(l=> subfragment(substring, l:Long))

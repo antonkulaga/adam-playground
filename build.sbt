@@ -40,7 +40,7 @@ libraryDependencies ++= Seq(
 
   "org.apache.spark" %% "spark-sql" % sparkVersion,
 
-  "org.bdgenomics.adam" %% "adam-core-spark2" % "0.21.0",
+  "org.bdgenomics.adam" %% "adam-core-spark2" % "0.22.0",
 
   "org.bdgenomics.utils" %% "utils-misc" % "0.2.13",
 

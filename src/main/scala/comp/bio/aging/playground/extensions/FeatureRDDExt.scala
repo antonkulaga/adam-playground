@@ -6,8 +6,10 @@ import org.bdgenomics.adam.models._
 import org.bdgenomics.adam.rdd.contig.NucleotideContigFragmentRDD
 import org.bdgenomics.adam.rdd.feature.FeatureRDD
 import org.bdgenomics.formats.avro._
+
 import scala.collection.JavaConverters._
 import org.bdgenomics.adam.rdd.ADAMContext._
+import org.bdgenomics.adam.rdd.GenomicRDD
 
 import scala.Iterable
 import scala.collection.immutable._
@@ -18,13 +20,20 @@ import scala.collection.immutable._
   */
 class FeatureRDDExt(val features: FeatureRDD) {
 
-  lazy val featuresByRegion = features.rdd.keyBy(f=>f.getRegion)
+  lazy val featuresByRegion: RDD[(ReferenceRegion, Feature)] = features.rdd.keyBy(f=>f.region)
 
-  def transformSequences(collectFunction: PartialFunction[SequenceRecord, SequenceRecord]) = {
+  def getTotalLength: Double = features.rdd.map(f=>f.region.length()).sum()
+
+  def transformSequences(collectFunction: PartialFunction[SequenceRecord, SequenceRecord]): FeatureRDD = {
     val newDic = new SequenceDictionary(features.sequences.records.collect(collectFunction))
     features.copy(sequences = newDic)
   }
 
+  def coveredByFeatures(features2: FeatureRDD): RDD[Feature] = {
+    features.broadcastRegionJoin(features2).rdd.filter{
+      case (f1, f2) => f2.region.covers(f1.region)
+    }.keys.distinct()//.map(f=>Math.abs(f.region.length())).collect.sum
+  }
 
   def filterByContainedRegions(regions: Seq[ReferenceRegion]): RDD[(Feature, Seq[ReferenceRegion])] = {
     featuresByRegion.collect{
@@ -45,6 +54,8 @@ class FeatureRDDExt(val features: FeatureRDD) {
   def transcripts: FeatureRDD = ofType("transcript")
 
   def genes: FeatureRDD = ofType("gene")
+
+  def filterByGeneName(fun: String => Boolean): FeatureRDD = filterByAttribute("gene_name")(fun)
 
   def exons: FeatureRDD = ofType("exon")
 

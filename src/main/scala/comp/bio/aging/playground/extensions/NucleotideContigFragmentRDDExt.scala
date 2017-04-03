@@ -1,46 +1,32 @@
 package comp.bio.aging.playground.extensions
 
-import org.apache.spark
+import comp.bio.aging.playground.extensions.stringSeqExtensions._
 import org.apache.spark.rdd.RDD
 import org.bdgenomics.adam.models.{ReferenceRegion, _}
 import org.bdgenomics.adam.rdd.contig.NucleotideContigFragmentRDD
 import org.bdgenomics.adam.rdd.feature.FeatureRDD
 import org.bdgenomics.formats.avro._
-import org.bdgenomics.adam.rdd.ADAMContext._
-import comp.bio.aging.playground.extensions.stringSeqExtensions._
-import comp.bio.aging.playground.extensions._
-import scala.collection.JavaConverters._
+
 import scala.collection.immutable._
-import scala.math.max
 
 
 class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD) extends AnyVal{
-
 
   def transformSequences(collectFunction: PartialFunction[SequenceRecord, SequenceRecord]): NucleotideContigFragmentRDD = {
     val newDic = new SequenceDictionary(fragments.sequences.records.collect(collectFunction))
     fragments.copy(sequences = newDic)
   }
 
-  def trimStringByRegion(fragment: (ReferenceRegion, NucleotideContigFragment), region: ReferenceRegion): (ReferenceRegion, String) = {
-    val trimStart = max(0, region.start - fragment._1.start).toInt
-    val trimEnd = max(0, fragment._1.end - region.end).toInt
+  def getTotalLength: Double = fragments.rdd.map(f=>f.region.length()).sum()
 
-    val fragmentSequence: String = fragment._2.getFragmentSequence
-
-    val str = fragmentSequence.drop(trimStart)
-      .dropRight(trimEnd)
-    val reg = new ReferenceRegion(
-      fragment._1.referenceName,
-      fragment._1.start + trimStart,
-      fragment._1.end - trimEnd
-    )
-    (reg, str)
+  def coveredByFeatures(featureRDD: FeatureRDD): RDD[NucleotideContigFragment] = {
+    fragments.broadcastRegionJoin(featureRDD).rdd.filter{
+      case (fragment, feature) => feature.region.covers(fragment.region)
+    }.keys.distinct()
   }
 
-
   def findRegions(sequences: List[String], flank: Boolean = false): RDD[(String, List[ReferenceRegion])] = {
-    val frags = if(flank) flankFrom(sequences:_*) else fragments
+    val frags = if(flank) flankFrom(sequences.distinct:_*) else fragments
     frags.rdd.flatMap{ frag =>
       val subregions = sequences.map{  str=> str -> frag.subregions(str) }
       subregions
@@ -49,16 +35,24 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
 
   def findSpecialRegions(sequences: List[String], flank: Boolean = false)
                         (inclusionsInto: (String, String) => List[Int]): RDD[(String, List[ReferenceRegion])] = {
-    val frags = if(flank) flankFrom(sequences:_*) else fragments
+    val frags = if(flank) flankFrom(sequences.distinct:_*) else fragments
     frags.rdd.flatMap{ frag =>
       val subregions = sequences.map{  str=> str -> frag.subregions(str, inclusionsInto) }
       subregions
     }.reduceByKey(_ ++ _)
   }
 
-  def extractRegions(regions: Array[ReferenceRegion]): RDD[(ReferenceRegion, String)] = extractRegions(regions.toList)
+   def extractRegions(regionsList: List[ReferenceRegion]): RDD[(ReferenceRegion, String)] = {
 
-  def extractRegions(regions: List[ReferenceRegion]): RDD[(ReferenceRegion, String)] = {
+    val regions = regionsList.distinct //to avoid duplicates
+
+    def extractSequence(fragmentRegion: ReferenceRegion, fragment: NucleotideContigFragment, region: ReferenceRegion): (ReferenceRegion, String) = {
+      val merged = fragmentRegion.intersection(region)
+      val start = (merged.start - fragmentRegion.start).toInt
+      val end = (merged.end - fragmentRegion.start).toInt
+      val fragmentSequence: String = fragment.getFragmentSequence
+      (merged, fragmentSequence.substring(start, end))
+    }
 
     def reduceRegionSequences(
                                kv1: (ReferenceRegion, String),
@@ -73,22 +67,14 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
     val byRegion: RDD[(Option[ReferenceRegion], NucleotideContigFragment)] = fragments.rdd.keyBy(ReferenceRegion(_))
     val places: RDD[(ReferenceRegion, (ReferenceRegion, String))] = byRegion
         .flatMap{
-          case (Some(reg), fragment) if  regions.exists(reg.overlaps) =>
+          case (Some(fragmentRegion), fragment) if  regions.exists(fragmentRegion.overlaps) =>
             regions.collect{
-              case region if reg.overlaps(region) => (region, trimStringByRegion((reg, fragment), region))
+              case region if fragmentRegion.overlaps(region) => (region, extractSequence(fragmentRegion, fragment, region))
             }
-
           case _ => Nil
-        }
+        }.sortByKey()
 
-    val byKey =  places.groupByKey
-      .filter{
-        case (_, iter) if iter.size >= 2 =>
-          iter.sliding(2).map(i=>(i.head, i.tail.head)).exists{ case ((one,_), (two, _))=> !one.isAdjacent(two)}
-        case _ => false
-      }.mapValues(_.toList.map(_._1))
-
-    places.reduceByKey(reduceRegionSequences).mapValues{ case (_, str) => str}
+    places.reduceByKey(reduceRegionSequences).values
   }
 
   /**

@@ -12,14 +12,17 @@ Now it is possible to:
 * extract genes and transcript features
 * save features by contig
 * use some extra methods on features
+* coverage search
 
-Contig Extensions
+NucleotideContig Extensions
 -----------------
 
 * search in the genome
 * search by feature
 * region extraction from the fragment
 * extract multiple regions at once
+* extract by string matching
+* filter by overlaping features
 
 String extensions
 -----------------

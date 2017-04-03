@@ -80,15 +80,6 @@ class ExtensionsTests extends WordSpec with Matchers with SharedSparkContext {
         new ReferenceRegion(contig().getContigName, 50, 70)
       )
 
-      val places: RDD[(ReferenceRegion, (ReferenceRegion, String))] = byRegion
-        .flatMap{
-          case (Some(reg), fragment) if  regions.exists(reg.overlaps) =>
-            regions.collect{
-              case region if reg.overlaps(region) => (region, fragments.trimStringByRegion((reg, fragment), region))
-            }
-
-          case _ => Nil
-        }
       val results: Set[(ReferenceRegion, String)] = fragments.extractRegions(regions).collect().toSet
       val seqs= regions.zip(List("ACAGC", "GGGTTCAGCT", "CCAGATATGA", "CCATGGGTTTCCAGAAGTTT")).toSet
       seqs shouldEqual results
@@ -113,7 +104,6 @@ class ExtensionsTests extends WordSpec with Matchers with SharedSparkContext {
       val regionsSpecial = special.values.collect().toList.flatten
       val extractedSpecial = fragments.extractRegions(regionsSpecial)
       extractedSpecial.values.collect.toSet shouldEqual Set("TGG", "GGG")
-
     }
   }
 
