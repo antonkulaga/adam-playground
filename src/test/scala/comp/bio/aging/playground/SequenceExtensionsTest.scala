@@ -18,5 +18,11 @@ class SequenceExtensionsTest extends WordSpec with Matchers {
       val str = "ATTCGCGAGCTAGCTAGCGTAC"
       "GC".inclusionsInto(str) shouldEqual List(4, 8, 12, 16)
     }
+
+    "search with mismatches" in {
+      val str = "ATTCGCGAGCTAGCTAGCGTAC"
+      val matches = "GCGA".partialMatchesIn(str, 1).toSet
+      matches.map(v=>str.substring(v,v + 4 )) shouldEqual Set("GCGA", "GCTA", "GCGT")
+    }
   }
 }

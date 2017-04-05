@@ -19,16 +19,39 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
 
   def getTotalLength: Double = fragments.rdd.map(f=>f.region.length()).sum()
 
-  def coveredByFeatures(featureRDD: FeatureRDD): RDD[NucleotideContigFragment] = {
-    fragments.broadcastRegionJoin(featureRDD).rdd.filter{
+  def coveredByFeatures(featureRDD: FeatureRDD): NucleotideContigFragmentRDD = {
+    fragments.transform{rdd=>
+      fragments.broadcastRegionJoin(featureRDD).rdd.filter{
       case (fragment, feature) => feature.region.covers(fragment.region)
+      }.keys.distinct()
+    }
+  }
+
+  def splitByCoverage(fragments: NucleotideContigFragmentRDD, features2: FeatureRDD) = {
+    val joined = fragments.leftOuterShuffleRegionJoin(features2).rdd.cache()
+    val notCovered = joined.filter{
+      case (f, None) => true
+      case (f1, Some(f2)) => !f2.region.covers(f1.region)
     }.keys.distinct()
+    val covered = joined.filter{
+      case (f1, Some(f2)) => f2.region.covers(f1.region)
+      case _ => false
+    }.keys.distinct()
+    (fragments.copy(rdd = covered), fragments.copy(rdd = notCovered))
   }
 
   def findRegions(sequences: List[String], flank: Boolean = false): RDD[(String, List[ReferenceRegion])] = {
     val frags = if(flank) flankFrom(sequences.distinct:_*) else fragments
     frags.rdd.flatMap{ frag =>
       val subregions = sequences.map{  str=> str -> frag.subregions(str) }
+      subregions
+    }.reduceByKey(_ ++ _)
+  }
+
+  def findRegionsWithMismatches(sequences: List[String], maxMismatches: Int, flank: Boolean = false): RDD[(String, List[ReferenceRegion])] = {
+    val frags = if(flank) flankFrom(sequences.distinct:_*) else fragments
+    frags.rdd.flatMap{ frag =>
+      val subregions = sequences.map{  str=> str -> frag.subregionsWithMismatches(str, maxMismatches) }
       subregions
     }.reduceByKey(_ ++ _)
   }
@@ -41,6 +64,11 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
       subregions
     }.reduceByKey(_ ++ _)
   }
+  /*
+  def findRegionsWithMismatches(sequences: List[String], flank: Boolean = false) = findSpecialRegions(sequences){
+    case ()
+  }
+  */
 
    def extractRegions(regionsList: List[ReferenceRegion]): RDD[(ReferenceRegion, String)] = {
 

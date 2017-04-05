@@ -29,7 +29,20 @@ class FeatureRDDExt(val features: FeatureRDD) {
     features.copy(sequences = newDic)
   }
 
-  def coveredByFeatures(features2: FeatureRDD): RDD[Feature] = {
+  def splitByCoverage(features2: FeatureRDD): (FeatureRDD, FeatureRDD) = {
+    val joined = features.leftOuterShuffleRegionJoin(features2).rdd.cache()
+    val notCovered = joined.filter{
+      case (f, None) => true
+      case (f1, Some(f2)) => !f2.region.covers(f1.region)
+    }.keys.distinct()
+    val covered = joined.filter{
+      case (f1, Some(f2)) => f2.region.covers(f1.region)
+      case _ => false
+    }.keys.distinct()
+    (features.copy(rdd = covered), features.copy(rdd = notCovered))
+  }
+
+  def coveredByFeatures(features2: FeatureRDD): FeatureRDD = features.transform{ rdd=>
     features.broadcastRegionJoin(features2).rdd.filter{
       case (f1, f2) => f2.region.covers(f1.region)
     }.keys.distinct()//.map(f=>Math.abs(f.region.length())).collect.sum

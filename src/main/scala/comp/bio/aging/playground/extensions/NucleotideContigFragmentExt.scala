@@ -49,7 +49,11 @@ class NucleotideContigFragmentExt(val fragment: NucleotideContigFragment) extend
       }
   }
 
-  def subregions(substring: String): List[ReferenceRegion] = {
+  def subregionsWithMismatches(substring: String, maxMismatches: Int): List[ReferenceRegion] = subregions(substring,
+    { case (what, where) => what.partialMatchesIn(where, maxMismatches)}
+  )
+
+    def subregions(substring: String): List[ReferenceRegion] = {
     val r = this.region
     val len = substring.length
     substring.inclusionsInto(fragment.getFragmentSequence)

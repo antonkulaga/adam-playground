@@ -31,7 +31,8 @@ class ExtensionsTests extends WordSpec with Matchers with SharedSparkContext {
   val dnas: Seq[String] = Vector(
     "ACAGCTGATCTCCAGATATGACCATGGGTT",
     "CAGCTGATCTCCAGATATGACCATGGGTTT",
-    "CCAGAAGTTTGAGCCACAAACCCATGGTCA")
+    "CCAGAAGTTTGAGCCACAAACCCATGGTCA"
+  )
 
   val merged = dnas.reduce(_ + _)
 
@@ -91,7 +92,6 @@ class ExtensionsTests extends WordSpec with Matchers with SharedSparkContext {
       val frags = sc.parallelize(dnas2fragments(dnas))
       val fragments = new NucleotideContigFragmentRDD(frags, dic)
 
-      //val seqs = List("ACAGC", "GGGTTCAGCT", "CCAGATATGA", "CCATGGGTTTCCAGAAGTTT")
       val seqs = List("ACAGC" ,"CAGCTG", "TGAGCCACAAACCC")
 
       val regs: RDD[(String, List[ReferenceRegion])] = fragments.findRegions(seqs, false)
@@ -105,6 +105,20 @@ class ExtensionsTests extends WordSpec with Matchers with SharedSparkContext {
       val extractedSpecial = fragments.extractRegions(regionsSpecial)
       extractedSpecial.values.collect.toSet shouldEqual Set("TGG", "GGG")
     }
+
+
+    "find regions with mismatches" in {
+      val dic = new SequenceDictionary(Vector(record))
+      val frags = sc.parallelize(dnas2fragments(dnas))
+      val fragments = new NucleotideContigFragmentRDD(frags, dic)
+
+      val seqsSpecial = List("TTT")
+      val special = fragments.findRegionsWithMismatches(seqsSpecial, 1)
+      val regionsSpecial = special.values.collect().toList.flatten
+      val extractedSpecial = fragments.extractRegions(regionsSpecial)
+      extractedSpecial.values.collect.toSet shouldEqual Set("TTT", "GTT", "TCT", "TAT", "TTG")
+    }
+
   }
 
 

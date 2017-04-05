@@ -30,7 +30,7 @@ object stringSeqExtensions {
     .forall{ i=> basesEqual(what(i).toUpper, where(start + i).toUpper) }
 
   def seqsInclusionsInto(what: String, where: String): List[Int] = {
-    what.matches(where, 0)(compareSeq)
+    what.matchesIn(where, 0)(compareSeq)
   }
 
 
@@ -38,9 +38,8 @@ object stringSeqExtensions {
     * Implicit class that extends string with sequences with extra methods
     * @param str
     */
-  class StringSeq(val string: String) extends AnyVal
-  {
-    def complement = string.toUpperCase.map{
+  class StringSeq(val string: String) extends AnyVal {
+    def complement = string.toUpperCase.map {
       case 'A' => 'T'
       case 'T' => 'A'
       case 'G' => 'C'
@@ -50,88 +49,65 @@ object stringSeqExtensions {
 
     @tailrec final def inclusionsInto(where: String, start: Int = 0, acc: List[Int] = Nil): List[Int] = where.indexOf(string, start) match {
       case -1 => acc.reverse
-      case index => inclusionsInto(where, index +1, index :: acc)
+      case index => inclusionsInto(where, index + 1, index :: acc)
     }
 
 
     @tailrec final def firstMatch(where: String, currentPosition: Int = 0, stopBeforeEnd: Int = 0)(compareFun: (String, String, Int) => Boolean): Int =
-      if(currentPosition + string.length + stopBeforeEnd > where.length)
+      if (currentPosition + string.length + stopBeforeEnd > where.length)
         -1
-      else
-      if(compareFun(string, where, currentPosition)) currentPosition else firstMatch(where, currentPosition + 1, stopBeforeEnd)(compareFun)
+      else if (compareFun(string, where, currentPosition)) currentPosition else firstMatch(where, currentPosition + 1, stopBeforeEnd)(compareFun)
 
 
-    @tailrec final def matches(where: String, current: Int = 0,
-                               startAfter: Int = 0,
-                               stopBeforeEnd: Int = 0,
-                               acc: List[Int] = Nil)
-                              (compareFun: (String, String, Int) => Boolean): List[Int] = {
-      if(current < startAfter)
-        matches(where, startAfter, startAfter, stopBeforeEnd, acc)(compareFun)
-      else
-      if( current + string.length + stopBeforeEnd > where.length ) acc.reverse
+    /**
+      * Find a substring in $where that matches specific conditions
+      *
+      * @param where
+      * @param current
+      * @param startAfter
+      * @param stopBeforeEnd
+      * @param acc
+      * @param compareFun a function (what, where) => Boolean to assess the substring match
+      * @return
+      */
+    @tailrec final def matchesIn(where: String,
+                                 current: Int = 0,
+                                 startAfter: Int = 0,
+                                 stopBeforeEnd: Int = 0,
+                                 acc: List[Int] = Nil)
+                                (compareFun: (String, String, Int) => Boolean): List[Int] = {
+      if (current < startAfter)
+        matchesIn(where, startAfter, startAfter, stopBeforeEnd, acc)(compareFun)
+      else if (current + string.length + stopBeforeEnd > where.length) acc.reverse
       else
         firstMatch(where, current, stopBeforeEnd)(compareFun) match {
           case -1 => acc.reverse
           case index =>
-            matches(where, index + 1, startAfter, stopBeforeEnd, index :: acc)(compareFun)
+            matchesIn(where, index + 1, startAfter, stopBeforeEnd, index :: acc)(compareFun)
         }
     }
 
+    @tailrec final def compareWithMismatches(what: String,
+                                             where: String,
+                                             maxMismatches: Int,
+                                             start: Int,
+                                             current: Int = 0,
+                                             acc: Int = 0
+                                            ): Boolean =
+      if (current + start >= where.length ||
+        acc > maxMismatches) false
+      else if (current >= what.length) true
+      else if (basesEqual(what(current).toUpper, where(start + current).toUpper))
+        compareWithMismatches(what, where,  maxMismatches, start, current + 1, acc)
+      else compareWithMismatches(what, where, maxMismatches, start, current + 1, acc + 1)
 
-    /*
-    @tailrec final def inclusionsIntoKMP(where: String,
-                                         start: Int = 0,
-                                         acc: List[Int] = Nil,
-                                         prefixes: Array[Int] = Array.empty[Int]): List[Int] = {
-      val prefs = if(prefixes.isEmpty) string.prefixesKMP else prefixes
-      where.indexOfKMP(string, prefs, start) match {
-        case -1 => acc.reverse
-        case index => this.inclusionsIntoKMP(where, index +1, index :: acc, prefs)
+    def partialMatchesIn(where: String, maxMismatches: Int, current: Int = 0,
+                         startAfter: Int = 0,
+                         stopBeforeEnd: Int = 0): List[Int] =
+      this.matchesIn(where, current, startAfter, stopBeforeEnd) {
+        case (what, wh, start) => compareWithMismatches(what, wh, maxMismatches, start)
       }
-    }
-
-    def indexOfKMP(pattern: String, start: Int): Int =  {
-      val prefixes = pattern.prefixesKMP
-      println("prefixes = "+prefixes.toList)
-      indexOfKMP(pattern, prefixes, start)
-    }
-
-    def indexOfKMP(pattern: String, prefixes: Array[Int], start: Int): Int =
-      if(string.length < pattern.length + start)
-        -1
-      else
-      {
-        var j = 0
-        for(i <- start until string.length) {
-          while(j > 0 && string.charAt(i) != pattern.charAt(j)){
-            j = prefixes(j - 1)
-          }
-          if(string.charAt(i)==pattern.charAt(j)) {
-            j = j+1
-            if(j==pattern.length) return i - (j - 1)
-          }
-        }
-        -1
-      }
-
-    def prefixesKMP: Array[Int] = {
-      val prefixes = new Array[Int](string.length)
-      for(i <- 1 until prefixes.length){
-        var j = prefixes(i-1)
-        while(i > 0 && string.charAt(i) != string.charAt(i))
-          j = prefixes(i -1)
-        if(string.charAt(i)==string.charAt(j)) j = j+1
-        prefixes(i) = j
-      }
-      prefixes
-    }
-    */
-
-
   }
-
-
 }
 
 
