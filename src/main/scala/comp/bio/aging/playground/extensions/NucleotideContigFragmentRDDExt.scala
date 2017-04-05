@@ -48,12 +48,32 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
     }.reduceByKey(_ ++ _)
   }
 
-  def findRegionsWithMismatches(sequences: List[String], maxMismatches: Int, flank: Boolean = false): RDD[(String, List[ReferenceRegion])] = {
-    val frags = if(flank) flankFrom(sequences.distinct:_*) else fragments
+  protected def regionsWithMismatches(frags: NucleotideContigFragmentRDD,
+                                          sequences: List[String],
+                                          maxMismatches: Int): RDD[(String, List[ReferenceRegion])] = {
     frags.rdd.flatMap{ frag =>
-      val subregions = sequences.map{  str=> str -> frag.subregionsWithMismatches(str, maxMismatches) }
-      subregions
+      sequences.map{ str=> str -> frag.subregionsWithMismatches(str, maxMismatches) }
     }.reduceByKey(_ ++ _)
+  }
+
+  def findRegionsWithMismatches(sequences: List[String],
+                                maxMismatches: Int,
+                                reverseComplement: Boolean = false,
+                                flank: Boolean = false): RDD[(String, List[ReferenceRegion])] = {
+    val frags = if(flank) flankFrom(sequences.distinct:_*) else fragments
+    if(reverseComplement) {
+      val pairs = sequences.map(s=> s-> s.reverse.complement)
+      val regions = frags.rdd.flatMap{ frag =>
+        pairs.map{
+          case (str, rev) =>
+              str -> (frag.subregionsWithMismatches(str, maxMismatches) ++
+                  frag.subregionsWithMismatches(rev, maxMismatches)
+          )
+        }
+      }
+      regions.reduceByKey(_ ++ _)
+    } else regionsWithMismatches(frags, sequences, maxMismatches)
+
   }
 
   def findSpecialRegions(sequences: List[String], flank: Boolean = false)

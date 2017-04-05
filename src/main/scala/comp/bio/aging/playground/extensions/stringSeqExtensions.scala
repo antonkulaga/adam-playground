@@ -94,12 +94,19 @@ object stringSeqExtensions {
                                              current: Int = 0,
                                              acc: Int = 0
                                             ): Boolean =
-      if (current + start >= where.length ||
-        acc > maxMismatches) false
-      else if (current >= what.length) true
-      else if (basesEqual(what(current).toUpper, where(start + current).toUpper))
-        compareWithMismatches(what, where,  maxMismatches, start, current + 1, acc)
-      else compareWithMismatches(what, where, maxMismatches, start, current + 1, acc + 1)
+      if(acc > maxMismatches)
+        false
+      else
+        if(current >= what.length)
+          true
+        else
+          if (current + start >= where.length)
+            false
+          else
+            if (basesEqual(what(current).toUpper, where(start + current).toUpper))
+              compareWithMismatches(what, where,  maxMismatches, start, current + 1, acc)
+            else
+              compareWithMismatches(what, where, maxMismatches, start, current + 1, acc + 1)
 
     def partialMatchesIn(where: String, maxMismatches: Int, current: Int = 0,
                          startAfter: Int = 0,
