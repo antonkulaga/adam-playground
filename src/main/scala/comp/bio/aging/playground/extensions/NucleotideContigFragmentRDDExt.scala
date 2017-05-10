@@ -27,7 +27,7 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
     }
   }
 
-  def splitByCoverage(fragments: NucleotideContigFragmentRDD, features2: FeatureRDD) = {
+  def splitByCoverage(features2: FeatureRDD) = {
     val joined = fragments.leftOuterShuffleRegionJoin(features2).rdd.cache()
     val notCovered = joined.filter{
       case (f, None) => true
@@ -161,6 +161,12 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
   def search(sequence: String, features: FeatureRDD): RDD[(Feature, Seq[ReferenceRegion])] = {
     val regions: List[ReferenceRegion] = this.search(sequence).collect().toList
     features.filterByContainedRegions(regions)
+  }
+
+  def filterByContigNames(filterFun: String => Boolean): Unit ={
+    fragments
+      .transform(rdd=>rdd.filter(c=>filterFun(c.getContig.getContigName)))
+      .transformSequences{ case s if filterFun(s.name) => s }
   }
 
   def saveContig(path: String, name: String): Unit ={

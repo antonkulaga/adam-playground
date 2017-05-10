@@ -48,6 +48,10 @@ class FeatureRDDExt(val features: FeatureRDD) {
     }.keys.distinct()//.map(f=>Math.abs(f.region.length())).collect.sum
   }
 
+  def overlappedFeatures(features2: FeatureRDD): FeatureRDD = features.transform{ rdd=>
+    features.broadcastRegionJoin(features2).rdd.keys.distinct()//.map(f=>Math.abs(f.region.length())).collect.sum
+  }
+
   def filterByContainedRegions(regions: Seq[ReferenceRegion]): RDD[(Feature, Seq[ReferenceRegion])] = {
     featuresByRegion.collect{
       case (fr, f) if regions.exists(r=>fr.contains(r))=>
@@ -64,13 +68,14 @@ class FeatureRDDExt(val features: FeatureRDD) {
 
   def ofType(tp: String): FeatureRDD = features.transform(rdd=>rdd.filter(f=>f.getFeatureType==tp))
 
+  def exons: FeatureRDD = ofType("exon")
   def transcripts: FeatureRDD = ofType("transcript")
-
   def genes: FeatureRDD = ofType("gene")
+  def utrs = ofType("UTR")
+  def cdses =  ofType("CDS")
 
   def filterByGeneName(fun: String => Boolean): FeatureRDD = filterByAttribute("gene_name")(fun)
 
-  def exons: FeatureRDD = ofType("exon")
 
   def byStrand(strand: Strand): RDD[Feature] = features.rdd.filter(f=>f.getStrand == Strand.INDEPENDENT || f.getStrand == Strand.UNKNOWN)
 

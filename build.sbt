@@ -8,7 +8,7 @@ name := "adam-playground"
 
 organization := "comp.bio.aging"
 
-scalaVersion :=  "2.11.8"
+scalaVersion :=  "2.11.11"
 
 isSnapshot := true
 
@@ -32,7 +32,7 @@ resolvers += sbt.Resolver.bintrayRepo("denigma", "denigma-releases")
 
 resolvers += "ICM repository" at "http://maven.icm.edu.pl/artifactory/repo"
 
-lazy val sparkVersion = "2.1.0"
+lazy val sparkVersion = "2.1.1"
 
 libraryDependencies ++= Seq(
   
@@ -50,14 +50,14 @@ libraryDependencies ++= Seq(
 
   "org.bdgenomics.utils" %% "utils-misc" % "0.2.13" % Test,
 
-  "org.scalatest" %% "scalatest" % "3.0.1" % Test,
+  "org.scalatest" %% "scalatest" % "3.0.3" % Test,
 
   "com.holdenkarau" %% "spark-testing-base" % "2.1.0_0.6.0" % Test,
 
   "org.scalacheck" %% "scalacheck" % "1.13.5" % Test
 )
 
-libraryDependencies += "com.lihaoyi" % "ammonite" % "0.8.2" % Test cross CrossVersion.full
+libraryDependencies += "com.lihaoyi" % "ammonite" % "0.8.4" % Test cross CrossVersion.full
 
 initialCommands in (Test, console) := """ammonite.Main().run()"""
 

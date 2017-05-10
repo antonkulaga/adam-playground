@@ -45,4 +45,15 @@ trait HDFSFilesExtensions {
         .byContig(contigName))
   }
 
+  import org.apache.hadoop.conf.Configuration
+  import org.apache.hadoop.fs._
+
+  def merge(srcPath: String, dstPath: String): Unit =  {
+    val hadoopConfig = new Configuration()
+    val hdfs = FileSystem.get(hadoopConfig)
+    FileUtil.copyMerge(hdfs, new Path(srcPath), hdfs, new Path(dstPath), true, hadoopConfig, null)
+    // the "true" setting deletes the source files once they are merged into the new output
+  }
+
+
 }

@@ -16,7 +16,7 @@ import org.bdgenomics.formats.avro.Feature
 /**
   * Created by antonkulaga on 3/27/17.
   */
-object AdamExtensions {
+object ADAMContextExtensions {
 
   implicit class spExt(val sparkContext: SparkContext) extends HDFSFilesExtensions{
 
