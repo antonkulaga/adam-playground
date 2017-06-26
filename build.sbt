@@ -10,6 +10,8 @@ organization := "comp.bio.aging"
 
 scalaVersion :=  "2.11.11"
 
+coursierMaxIterations := 200
+
 isSnapshot := true
 
 scalacOptions ++= Seq( "-target:jvm-1.8", "-feature", "-language:_" )
@@ -57,7 +59,7 @@ libraryDependencies ++= Seq(
   "org.scalacheck" %% "scalacheck" % "1.13.5" % Test
 )
 
-libraryDependencies += "com.lihaoyi" % "ammonite" % "0.8.4" % Test cross CrossVersion.full
+libraryDependencies += "com.lihaoyi" % "ammonite" % "0.9.9" % Test cross CrossVersion.full
 
 initialCommands in (Test, console) := """ammonite.Main().run()"""
 
