@@ -14,7 +14,7 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
 
   def transformSequences(collectFunction: PartialFunction[SequenceRecord, SequenceRecord]): NucleotideContigFragmentRDD = {
     val newDic = new SequenceDictionary(fragments.sequences.records.collect(collectFunction))
-    fragments.copy(sequences = newDic)
+    fragments.replaceSequences(newDic)
   }
 
   def getTotalLength: Double = fragments.rdd.map(f=>f.region.length()).sum()
@@ -37,7 +37,7 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
       case (f1, Some(f2)) => f2.region.covers(f1.region)
       case _ => false
     }.keys.distinct()
-    (fragments.copy(rdd = covered), fragments.copy(rdd = notCovered))
+    (fragments.transform(_ => covered), fragments.transform(_ => notCovered))
   }
 
   def findRegions(sequences: List[String], flank: Boolean = false): RDD[(String, List[ReferenceRegion])] = {
@@ -98,7 +98,7 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
       val merged = fragmentRegion.intersection(region)
       val start = (merged.start - fragmentRegion.start).toInt
       val end = (merged.end - fragmentRegion.start).toInt
-      val fragmentSequence: String = fragment.getFragmentSequence
+      val fragmentSequence: String = fragment.getSequence
       (merged, fragmentSequence.substring(start, end))
     }
 
@@ -149,9 +149,9 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
 
   def search(sequence: String): RDD[ReferenceRegion] = {
     val found = fragments.rdd.collect{
-      case frag if frag.hasRegion && frag.getFragmentSequence.contains(sequence) =>
+      case frag if frag.hasRegion && frag.getSequence.contains(sequence) =>
         val region = frag.region
-        sequence.inclusionsInto(frag.getFragmentSequence)
+        sequence.inclusionsInto(frag.getSequence)
           .map(i=>region.copy(start = region.start + i,
             end = region.start +i + sequence.length))
     }
@@ -165,12 +165,12 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
 
   def filterByContigNames(filterFun: String => Boolean): Unit ={
     fragments
-      .transform(rdd=>rdd.filter(c=>filterFun(c.getContig.getContigName)))
+      .transform(rdd=>rdd.filter(c=>filterFun(c.getContigName)))
       .transformSequences{ case s if filterFun(s.name) => s }
   }
 
   def saveContig(path: String, name: String): Unit ={
-    val filtered = fragments.transform(tr=>tr.filter(c=>c.getContig.getContigName==name))
+    val filtered = fragments.transform(tr=>tr.filter(c=>c.getContigName==name))
     val cont = filtered.transformSequences{ case s if s.name==name => s }
     cont.saveAsParquet(s"${path}/${name}.adam")
   }

@@ -35,24 +35,21 @@ class ExtensionsTests extends WordSpec with Matchers with SharedSparkContext {
     "CCAGAAGTTTGAGCCACAAACCCATGGTCA"
   )
 
+
+  lazy val test = "test"
+  
   val merged = dnas.reduce(_ + _)
 
   val record = SequenceRecord("test", merged.length)
 
-  def contig() = {
-    val c= new Contig()
-    c.setContigName("test")
-    c
-  }
-
   protected def makeFragment(str: String, start: Long) = {
 
     NucleotideContigFragment.newBuilder()
-      .setContig(contig())
-      .setFragmentStartPosition(start)
-      .setFragmentLength(str.length: Long)
-      .setFragmentSequence(str)
-      .setFragmentEndPosition(start + str.length)
+      .setContigName("test")
+      .setStart(start)
+      .setLength(str.length: Long)
+      .setSequence(str)
+      .setEnd(start + str.length)
       .build()
   }
 
@@ -71,15 +68,15 @@ class ExtensionsTests extends WordSpec with Matchers with SharedSparkContext {
 
       val dic = new SequenceDictionary(Vector(record))
       val frags = sc.parallelize(dnas2fragments(dnas))
-      val fragments = new NucleotideContigFragmentRDD(frags, dic)
+      val fragments = NucleotideContigFragmentRDD(frags, dic)
 
       val byRegion = fragments.rdd.keyBy(ReferenceRegion(_))
 
       val regions = List(
-        new ReferenceRegion(contig().getContigName, 0, 5),
-        new ReferenceRegion(contig().getContigName, 25, 35),
-        new ReferenceRegion(contig().getContigName, 40, 50),
-        new ReferenceRegion(contig().getContigName, 50, 70)
+        new ReferenceRegion(test, 0, 5),
+        new ReferenceRegion(test, 25, 35),
+        new ReferenceRegion(test, 40, 50),
+        new ReferenceRegion(test, 50, 70)
       )
 
       val results: Set[(ReferenceRegion, String)] = fragments.extractRegions(regions).collect().toSet
@@ -91,7 +88,7 @@ class ExtensionsTests extends WordSpec with Matchers with SharedSparkContext {
 
       val dic = new SequenceDictionary(Vector(record))
       val frags = sc.parallelize(dnas2fragments(dnas))
-      val fragments = new NucleotideContigFragmentRDD(frags, dic)
+      val fragments = NucleotideContigFragmentRDD(frags, dic)
 
       val seqs = List("ACAGC" ,"CAGCTG", "TGAGCCACAAACCC")
 
@@ -111,7 +108,7 @@ class ExtensionsTests extends WordSpec with Matchers with SharedSparkContext {
     "find regions with mismatches" in {
       val dic = new SequenceDictionary(Vector(record))
       val frags = sc.parallelize(dnas2fragments(dnas))
-      val fragments = new NucleotideContigFragmentRDD(frags, dic)
+      val fragments = NucleotideContigFragmentRDD(frags, dic)
 
       val seqsSpecial = List("TTT")
       val special = fragments.findRegionsWithMismatches(seqsSpecial, 1)
@@ -123,7 +120,7 @@ class ExtensionsTests extends WordSpec with Matchers with SharedSparkContext {
     "search with mismatches in strings" in {
       val dic = new SequenceDictionary(Vector(record))
       val frags = sc.parallelize(dnas2fragments(dnas))
-      val fragments = new NucleotideContigFragmentRDD(frags, dic)
+      val fragments = NucleotideContigFragmentRDD(frags, dic)
 
       val seqsSpecial = List("TTT")
       val special = fragments.findRegionsWithMismatches(seqsSpecial, 1)
@@ -135,7 +132,7 @@ class ExtensionsTests extends WordSpec with Matchers with SharedSparkContext {
     "search with mismatches in fragments" in {
       val dic = new SequenceDictionary(Vector(SequenceRecord("test", merged.length)))
       val rdd = sc.parallelize(dnas2fragments(dnas))
-      val fragments = new NucleotideContigFragmentRDD(rdd, dic)
+      val fragments = NucleotideContigFragmentRDD(rdd, dic)
       fragments.findRegionsWithMismatches(List("CTGATCTCCAGATATGACCATGG"), 2).collect().head._2.size shouldEqual 2
 
       val one = Vector(
@@ -144,7 +141,7 @@ class ExtensionsTests extends WordSpec with Matchers with SharedSparkContext {
         "CAGATCTCCAAATATGACCATGG",
         "CTGATCTCCAGATATGACCATGG".reverse.complement
       )
-      val efragments = new NucleotideContigFragmentRDD(sc.parallelize(dnas2fragments(one)), dic)
+      val efragments = NucleotideContigFragmentRDD(sc.parallelize(dnas2fragments(one)), dic)
       efragments.findRegionsWithMismatches(List("CTGATCTCCAGATATGACCATGG"), 0, false, true).collect().head._2.size shouldEqual 1
       efragments.findRegionsWithMismatches(List("CTGATCTCCAGATATGACCATGG"), 0, true, true).collect().head._2.size shouldEqual 2
       efragments.findRegionsWithMismatches(List("CTGATCTCCAGATATGACCATGG"), 2, false, true).collect().head._2.size shouldEqual 3

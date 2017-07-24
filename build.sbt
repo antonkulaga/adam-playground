@@ -28,13 +28,19 @@ unmanagedClasspath in Compile ++= (unmanagedResources in Compile).value
 
 updateOptions := updateOptions.value.withCachedResolution(true) //to speed up dependency resolution
 
+resolvers += Resolver.mavenLocal
+
 resolvers += sbt.Resolver.bintrayRepo("comp-bio-aging", "main")
 
 resolvers += sbt.Resolver.bintrayRepo("denigma", "denigma-releases")
 
 resolvers += "ICM repository" at "http://maven.icm.edu.pl/artifactory/repo"
 
-lazy val sparkVersion = "2.1.1"
+lazy val sparkVersion = "2.2.0"
+
+lazy val adamVersion = "0.23.0-SNAPSHOT"//"0.22.0"
+
+lazy val utilsVersion = "0.2.13"
 
 libraryDependencies ++= Seq(
   
@@ -42,24 +48,24 @@ libraryDependencies ++= Seq(
 
   "org.apache.spark" %% "spark-sql" % sparkVersion,
 
-  "org.bdgenomics.adam" %% "adam-core-spark2" % "0.22.0",
+  "org.bdgenomics.adam" %% "adam-core-spark2" % adamVersion,
 
-  "org.bdgenomics.utils" %% "utils-misc" % "0.2.13",
+  "org.bdgenomics.utils" %% "utils-misc" % utilsVersion,
 
-  "org.bdgenomics.utils" %% "utils-misc-spark2" % "0.2.13",
+  "org.bdgenomics.utils" %% "utils-misc-spark2" % utilsVersion,
 
-  "org.bdgenomics.utils" %% "utils-intervalrdd-spark2" % "0.2.13",
+  "org.bdgenomics.utils" %% "utils-intervalrdd-spark2" % utilsVersion,
 
-  "org.bdgenomics.utils" %% "utils-misc" % "0.2.13" % Test,
+  "org.bdgenomics.utils" %% "utils-misc" % utilsVersion % Test,
 
   "org.scalatest" %% "scalatest" % "3.0.3" % Test,
 
-  "com.holdenkarau" %% "spark-testing-base" % "2.1.0_0.6.0" % Test,
+  "com.holdenkarau" %% "spark-testing-base" % "2.2.0_0.7.2" % Test,
 
   "org.scalacheck" %% "scalacheck" % "1.13.5" % Test
 )
 
-libraryDependencies += "com.lihaoyi" % "ammonite" % "0.9.9" % Test cross CrossVersion.full
+libraryDependencies += "com.lihaoyi" % "ammonite" % "1.0.0" % Test cross CrossVersion.full
 
 initialCommands in (Test, console) := """ammonite.Main().run()"""
 

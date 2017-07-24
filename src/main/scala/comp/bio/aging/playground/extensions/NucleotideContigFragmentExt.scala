@@ -29,19 +29,19 @@ class NucleotideContigFragmentExt(val fragment: NucleotideContigFragment) extend
 
   def sequenceByRegion(otherRegion: ReferenceRegion): Option[String] = if(region.overlaps(otherRegion)){
     val reg = region.intersection(otherRegion)
-    val start = (reg.start - fragment.getFragmentStartPosition).toInt
-    val end = (reg.end - fragment.getFragmentStartPosition).toInt
-    Some(fragment.getFragmentSequence.substring(start, end))
+    val start = (reg.start - fragment.getStart).toInt
+    val end = (reg.end - fragment.getStart).toInt
+    Some(fragment.getSequence.substring(start, end))
   } else None
 
   def subfragments(substring: String): List[NucleotideContigFragment] = {
-    substring.inclusionsInto(fragment.getFragmentSequence).map(l=> subfragment(substring, l:Long))
+    substring.inclusionsInto(fragment.getSequence).map(l=> subfragment(substring, l:Long))
   }
 
   def subregions(substring: String, inclusionsInto: (String, String) => List[Int]): List[ReferenceRegion] = {
     val r = this.region
     val len = substring.length
-    inclusionsInto(substring, fragment.getFragmentSequence)
+    inclusionsInto(substring, fragment.getSequence)
       .map{i=>
         val s = r.start + i.toLong
         val e = s + len
@@ -56,7 +56,7 @@ class NucleotideContigFragmentExt(val fragment: NucleotideContigFragment) extend
   def subregions(substring: String): List[ReferenceRegion] = {
     val r = this.region
     val len = substring.length
-    substring.inclusionsInto(fragment.getFragmentSequence)
+    substring.inclusionsInto(fragment.getSequence)
       .map{i=>
         val s = r.start + i.toLong
         val e = s + len
@@ -67,11 +67,12 @@ class NucleotideContigFragmentExt(val fragment: NucleotideContigFragment) extend
   def subfragment(substring: String, index: Long): NucleotideContigFragment = {
     NucleotideContigFragment
       .newBuilder(fragment)
-      .setFragmentStartPosition(fragment.getFragmentStartPosition + index)
-      .setFragmentEndPosition(fragment.getFragmentStartPosition + (index + substring.length))
-      .setFragmentNumber(null)
-      .setFragmentSequence(substring)
-      .setFragmentLength(substring.length: Long)
+      .setStart(fragment.getStart + index)
+      .setEnd(fragment.getStart + (index + substring.length))       
+      .setIndex(null)
+      //.setFragmentNumber(null)
+      .setSequence(substring)
+      .setLength(substring.length: Long)
       .build()
   }
 

@@ -26,7 +26,7 @@ class FeatureRDDExt(val features: FeatureRDD) {
 
   def transformSequences(collectFunction: PartialFunction[SequenceRecord, SequenceRecord]): FeatureRDD = {
     val newDic = new SequenceDictionary(features.sequences.records.collect(collectFunction))
-    features.copy(sequences = newDic)
+    features.replaceSequences(newDic)
   }
 
   def splitByCoverage(features2: FeatureRDD): (FeatureRDD, FeatureRDD) = {
@@ -39,7 +39,7 @@ class FeatureRDDExt(val features: FeatureRDD) {
       case (f1, Some(f2)) => f2.region.covers(f1.region)
       case _ => false
     }.keys.distinct()
-    (features.copy(rdd = covered), features.copy(rdd = notCovered))
+    (features.transform(_=> covered), features.transform(_=> notCovered))
   }
 
   def coveredByFeatures(features2: FeatureRDD): FeatureRDD = features.transform{ rdd=>
