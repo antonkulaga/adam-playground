@@ -76,7 +76,6 @@ class FeatureRDDExt(val features: FeatureRDD) {
 
   def filterByGeneName(fun: String => Boolean): FeatureRDD = filterByAttribute("gene_name")(fun)
 
-
   def byStrand(strand: Strand): RDD[Feature] = features.rdd.filter(f=>f.getStrand == Strand.INDEPENDENT || f.getStrand == Strand.UNKNOWN)
 
   def byType: RDD[(String, Iterable[Feature])] = features.rdd.groupBy(f=>f.getFeatureType)
@@ -97,6 +96,5 @@ class FeatureRDDExt(val features: FeatureRDD) {
   def saveContigFeatures(path: String, name: String): Unit ={
     this.byContig(name).saveAsParquet(s"${path}/${name}Features.adam")
   }
-
 
 }

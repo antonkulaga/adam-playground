@@ -2,6 +2,7 @@ package comp.bio.aging.playground.extensions
 
 import comp.bio.aging.playground.extensions.stringSeqExtensions._
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql._
 import org.bdgenomics.adam.models.{ReferenceRegion, _}
 import org.bdgenomics.adam.rdd.contig.NucleotideContigFragmentRDD
 import org.bdgenomics.adam.rdd.feature.FeatureRDD
@@ -10,7 +11,7 @@ import org.bdgenomics.formats.avro._
 import scala.collection.immutable._
 
 
-class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD) extends AnyVal{
+class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD) extends AnyVal {
 
   def transformSequences(collectFunction: PartialFunction[SequenceRecord, SequenceRecord]): NucleotideContigFragmentRDD = {
     val newDic = new SequenceDictionary(fragments.sequences.records.collect(collectFunction))
@@ -90,9 +91,12 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
   }
   */
 
-   def extractRegions(regionsList: List[ReferenceRegion]): RDD[(ReferenceRegion, String)] = {
-
-    val regions = regionsList.distinct //to avoid duplicates
+  /**
+    * From a set of contigs, returns a list of sequences based on reference regions provided
+    * @param regions List of Reference regions over which to get sequences
+    * @return RDD[(ReferenceRegion, String)] of region -> sequence pairs.
+    */
+   def extractRegions(regions: Iterable[ReferenceRegion]): RDD[(ReferenceRegion, String)] = {
 
     def extractSequence(fragmentRegion: ReferenceRegion, fragment: NucleotideContigFragment, region: ReferenceRegion): (ReferenceRegion, String) = {
       val merged = fragmentRegion.intersection(region)
@@ -173,6 +177,84 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
     val filtered = fragments.transform(tr=>tr.filter(c=>c.getContigName==name))
     val cont = filtered.transformSequences{ case s if s.name==name => s }
     cont.saveAsParquet(s"${path}/${name}.adam")
+  }
+
+  /*
+  def extractFeatures(features: Iterable[Feature]) = {
+
+    //fragments.extractRegions()
+  }
+  */
+
+  def mergeFeatures(key: String, iter: Iterator[Row]) = {
+    val sorted = iter.toList.sortBy(r=>r.getAs[Long]("fragment_start"))
+    val sequence = iter.toList match {
+      case head::Nil =>
+        val start =  head.getAs[Long]("start")
+        val end =  head.getAs[Long]("end")
+        val fragmentStart = head.getAs[Long]("fragment_start")
+        val fragmentEnd = head.getAs[Long]("fragment_end")
+        val startIndex = (Math.max(start, fragmentEnd) - fragmentEnd).toInt
+        val endIndex = (Math.min(end, fragmentEnd) - fragmentStart).toInt
+        val str: String = head.getAs[String]("sequence").substring(startIndex, endIndex)
+        //if(head.getAs[String]("strand").toUpperCase == "REVERSE") str.reverse else str
+        str
+
+      case head::tail =>
+        val seq = head.getAs[String]("sequence")
+        val start =  head.getAs[Long]("start")
+        val end =  head.getAs[Long]("end")
+        val str = tail.foldLeft(seq){
+          case (acc, el) =>
+            val fragmentStart = el.getAs[Long]("fragment_start")
+            val fragmentEnd = el.getAs[Long]("fragment_end")
+            val startIndex = (Math.max(start, fragmentEnd) - fragmentEnd).toInt
+            val endIndex = (Math.min(end, fragmentEnd) - fragmentStart).toInt
+            val str = head.getAs[String]("sequence").substring(startIndex, endIndex)
+            acc + el
+        }
+        //if( (end - start).toInt != str.length) print(s"LENGTH IS DIFFERENT!")
+        //if(head.getAs[String]("strand").toUpperCase == "REVERSE") str.reverse else str
+        str
+
+      case _ => ""
+    }
+    key -> sequence
+  }
+
+  def extractFeatures(features: FeatureRDD,
+                      featureType: FeatureType,
+                      getKey: Row => String)(implicit session: SparkSession): Dataset[(String, String)] = {
+    import session.implicits._
+    val encode = Encoders.tuple[String, String](Encoders.STRING, Encoders.STRING)
+    val grouped: KeyValueGroupedDataset[String, Row] = extractFeatureGroups(features, featureType, getKey)(session)
+    //grouped.mapGroups{ (key, iter) => ("", "") }.as[Tuple2[String, String]](encode)
+    grouped.mapGroups[(String, String)]{ (key: String, iter: Iterator[Row]) => mergeFeatures(key, iter) }(encode)
+  }
+
+  def extractFeatureGroups(features: FeatureRDD,
+                              featureType: FeatureType,
+                              getKey: Row => String
+                             )(implicit session: SparkSession): KeyValueGroupedDataset[String, Row]
+    /*(implicit session: org.apache.spark.sql.SparkSession)*/ = {
+    import session.implicits._
+    val frags = fragments.toDF()
+      .withColumnRenamed("start", "fragment_start")
+      .withColumnRenamed("end", "fragment_end")
+    val fs = features.dataset
+    val tp = featureType.entryName
+    val grouping = featureType match {
+      case FeatureType.Gene => "geneId"
+      case FeatureType.Exon => "exonId"
+      case _ => "transcriptId"
+    }
+
+    frags.join(fs,
+      fs("start") <= frags("fragment_end")
+        &&  fs("end") >= frags("fragment_start")
+        && fs("contigName") === frags("contigName")
+        && fs("featureType") === tp
+    ).groupByKey(getKey)
   }
 
 }

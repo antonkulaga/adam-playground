@@ -1,5 +1,6 @@
-package comp.bio.aging.playground
-
+package test
+import comp.bio.aging.playground._
+import comp.bio.aging.playground.extensions._
 object Main {
 
   def time[R](name: String)(block: => R): (R, Long) = {

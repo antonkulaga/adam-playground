@@ -1,8 +1,9 @@
-package comp.bio.aging.playground
+package test
 
-import comp.bio.aging.playground.extensions.stringSeqExtensions._
 import org.scalatest.{Matchers, WordSpec}
-
+import comp.bio.aging.playground._
+import comp.bio.aging.playground.extensions._
+import comp.bio.aging.playground.extensions.stringSeqExtensions._
 
 class SequenceExtensionsTest extends WordSpec with Matchers {
 

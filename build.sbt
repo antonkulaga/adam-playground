@@ -42,11 +42,17 @@ lazy val adamVersion = "0.23.0-SNAPSHOT"//"0.22.0"
 
 lazy val utilsVersion = "0.2.13"
 
+lazy val enumeratumVersion = "1.5.12"
+
+lazy val pprintVersion = "0.5.2"
+
 libraryDependencies ++= Seq(
   
   "org.apache.spark" %% "spark-core" % sparkVersion,
 
   "org.apache.spark" %% "spark-sql" % sparkVersion,
+
+  "org.apache.spark" %% "spark-hive" % sparkVersion,
 
   "org.bdgenomics.adam" %% "adam-core-spark2" % adamVersion,
 
@@ -56,18 +62,26 @@ libraryDependencies ++= Seq(
 
   "org.bdgenomics.utils" %% "utils-intervalrdd-spark2" % utilsVersion,
 
+  "com.beachape" %% "enumeratum" % enumeratumVersion,
+
+  "com.lihaoyi" %% "pprint" % pprintVersion,
+
   "org.bdgenomics.utils" %% "utils-misc" % utilsVersion % Test,
 
   "org.scalatest" %% "scalatest" % "3.0.3" % Test,
 
   "com.holdenkarau" %% "spark-testing-base" % "2.2.0_0.7.2" % Test,
 
-  "org.scalacheck" %% "scalacheck" % "1.13.5" % Test
+  "org.scalacheck" %% "scalacheck" % "1.13.5" % Test,
+
+  "com.lihaoyi" % "ammonite" % "1.0.0" % Test cross CrossVersion.full
+
 )
 
-libraryDependencies += "com.lihaoyi" % "ammonite" % "1.0.0" % Test cross CrossVersion.full
 
 initialCommands in (Test, console) := """ammonite.Main().run()"""
+
+testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oF")
 
 exportJars := true
 

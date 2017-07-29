@@ -1,1 +1,1 @@
-version in ThisBuild := "0.0.7-SNAP5"
+version in ThisBuild := "0.0.7-SNAP6"
