@@ -33,7 +33,7 @@ abstract class AdamTestBase extends  WordSpec with Matchers with DatasetSuiteBas
       set("spark.driver.host", "localhost").
       set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").
       set("spark.kryo.registrator", "org.bdgenomics.adam.serialization.ADAMKryoRegistrator").
-      set("spark.kryoserializer.buffer.mb", "16").
+      set("spark.kryoserializer.buffer", "16m").
       set("spark.kryoserializer.buffer.max.mb", "1024").
       set("spark.kryo.referenceTracking", "true")
   }
@@ -81,7 +81,7 @@ abstract class AdamTestBase extends  WordSpec with Matchers with DatasetSuiteBas
       .setExonId(exondId)
       .setFeatureType(featureType.entryName)
       .setContigName(contigName)
-      .setStrand(Strand.FORWARD)
+      .setStrand(Strand.INDEPENDENT)
       .clearAttributes()
       .build()
   }

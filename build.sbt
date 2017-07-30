@@ -74,7 +74,7 @@ libraryDependencies ++= Seq(
 
   "org.scalacheck" %% "scalacheck" % "1.13.5" % Test,
 
-  "com.lihaoyi" % "ammonite" % "1.0.0" % Test cross CrossVersion.full
+  "com.lihaoyi" % "ammonite" % "1.0.1" % Test cross CrossVersion.full
 
 )
 

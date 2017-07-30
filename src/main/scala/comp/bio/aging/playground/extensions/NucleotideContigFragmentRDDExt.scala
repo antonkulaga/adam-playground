@@ -3,6 +3,7 @@ package comp.bio.aging.playground.extensions
 import comp.bio.aging.playground.extensions.stringSeqExtensions._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
+import org.apache.spark.storage.StorageLevel
 import org.bdgenomics.adam.models.{ReferenceRegion, _}
 import org.bdgenomics.adam.rdd.contig.NucleotideContigFragmentRDD
 import org.bdgenomics.adam.rdd.feature.FeatureRDD
@@ -179,12 +180,6 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
     cont.saveAsParquet(s"${path}/${name}.adam")
   }
 
-  /*
-  def extractFeatures(features: Iterable[Feature]) = {
-
-    //fragments.extractRegions()
-  }
-  */
 
   def mergeFeatures(key: String, iter: Iterator[Row]) = {
     val sorted = iter.toList.sortBy(r=>r.getAs[Long]("fragment_start"))
@@ -222,13 +217,41 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
     key -> sequence
   }
 
-  def extractFeatures(features: FeatureRDD,
+
+  def extractTranscripts(features: FeatureRDD, transcripts: Set[String]): RDD[(String, String)] = {
+    val byRegions = features.rdd
+      .filter(f=>f.getFeatureType == FeatureType.Exon.entryName && transcripts.contains(f.getTranscriptId))
+      .map(t=>(t.region, t.getTranscriptId))
+      .persist(StorageLevel.MEMORY_AND_DISK)
+    val regions: Set[ReferenceRegion] = byRegions.keys.collect().toSet
+    //Set(ReferenceRegion(test,0,30,FORWARD), ReferenceRegion(test,36,66,FORWARD), ReferenceRegion(test,72,102,FORWARD))
+    val strs: RDD[(ReferenceRegion, String)] = extractRegions(regions)
+    val s = strs.collect()
+    val br = byRegions.collect()
+    println("=====================")
+    println("FOUND STRS = ")
+    pprint.pprintln(s)
+    println("to join with--------------------")
+    pprint.pprintln(br)
+    val joined: RDD[(String, (ReferenceRegion, (String, String)))] = byRegions.join(strs).keyBy(_._2._1)
+    joined.groupByKey.mapValues {
+      iter =>
+        val sorted: Seq[(ReferenceRegion, (String, String))] = iter.toList.sortBy(l => l._1.start)
+        sorted.foldLeft("") {
+          case (acc, (_, (_, str))) => acc + str
+        }
+    }
+
+  }
+
+
+  def extractFeatures(featureFrame: DataFrame,
                       featureType: FeatureType,
-                      getKey: Row => String)(implicit session: SparkSession): Dataset[(String, String)] = {
+                      getKey: Row => String)
+                     (implicit session: SparkSession): Dataset[(String, String)] = {
     import session.implicits._
     val encode = Encoders.tuple[String, String](Encoders.STRING, Encoders.STRING)
-    val grouped: KeyValueGroupedDataset[String, Row] = extractFeatureGroups(features, featureType, getKey)(session)
-    //grouped.mapGroups{ (key, iter) => ("", "") }.as[Tuple2[String, String]](encode)
+    val grouped: KeyValueGroupedDataset[String, Row] = extractFeatureGroups(featureFrame, featureType, getKey)(session)
     grouped.mapGroups[(String, String)]{ (key: String, iter: Iterator[Row]) => mergeFeatures(key, iter) }(encode)
   }
 
@@ -236,25 +259,29 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
                               featureType: FeatureType,
                               getKey: Row => String
                              )(implicit session: SparkSession): KeyValueGroupedDataset[String, Row]
-    /*(implicit session: org.apache.spark.sql.SparkSession)*/ = {
+    =  extractFeatureGroups(features.toDF(), featureType, getKey)(session)
+
+  def extractFeatureGroups(featureFrame: DataFrame, featureType: FeatureType, getKey: Row => String)(implicit session: SparkSession) = {
     import session.implicits._
     val frags = fragments.toDF()
       .withColumnRenamed("start", "fragment_start")
       .withColumnRenamed("end", "fragment_end")
-    val fs = features.dataset
-    val tp = featureType.entryName
-    val grouping = featureType match {
+
+    /*
+    val tp = featureType match {
       case FeatureType.Gene => "geneId"
       case FeatureType.Exon => "exonId"
       case _ => "transcriptId"
     }
+    */
 
-    frags.join(fs,
-      fs("start") <= frags("fragment_end")
-        &&  fs("end") >= frags("fragment_start")
-        && fs("contigName") === frags("contigName")
-        && fs("featureType") === tp
-    ).groupByKey(getKey)
+    frags.join(featureFrame,
+        featureFrame("featureType") === featureType.entryName &&
+        featureFrame("contigName") === frags("contigName") &&
+        featureFrame("start") <= frags("fragment_end") &&
+        featureFrame("end") >= frags("fragment_start")
+        //featureFrame(tp) == frags()
+    ).orderBy($"fragment_start").groupByKey(getKey)
   }
 
 }

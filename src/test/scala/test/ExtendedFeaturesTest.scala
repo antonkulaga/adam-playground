@@ -81,17 +81,13 @@ class ExtendedFeaturesTest extends AdamTestBase {
       //println("-----------------------------------")
       //println(grouped.count().count())
 
-      /*
-      val resultDataset: Dataset[(String, String)] = fragments.extractFeatures(features, FeatureType.Exon, r=>r.getAs[String]("transcriptId"))
-      val result = resultDataset.collect.toSet
-      result.size shouldEqual(3)
-      result shouldEqual Set(
-        ("exon1", "ACAGCTGATCTCCAGATATGACCATGGGTT"),
-        ("exon2", "CAGCTGATCTCCAGATATGACCATGGGTTT"),
-        ("exon3" , "CCAGAAGTTTGAGCCACAAACCCATGGTCA")
-      )
-      */
-
+      //val resultDataset= fragments.extractFeatures(features.toDF(), FeatureType.Exon, r => r.getAs[String]("transcriptId"))
+      //val result = resultDataset.collect.toSet
+      //pprint.pprintln(result)
+      //result.size shouldEqual(3)
+      val trs = features.rdd.map(f=>f.getTranscriptId).collect().toSet
+      val results = fragments.extractTranscripts(features, trs).collectAsMap().toMap
+      results shouldEqual Map( "transcript" ->  "ACAGCTGATCTCCAGATATGACCATGGGTTCAGCTGATCTCCAGATATGACCATGGGTTTCCAGAAGTTTGAGCCACAAACCCATGGTCA")
     }
   }
 }
