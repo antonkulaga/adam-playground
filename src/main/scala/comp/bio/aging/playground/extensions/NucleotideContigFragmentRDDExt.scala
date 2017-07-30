@@ -100,7 +100,9 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
    def extractRegions(regions: Iterable[ReferenceRegion]): RDD[(ReferenceRegion, String)] = {
 
     def extractSequence(fragmentRegion: ReferenceRegion, fragment: NucleotideContigFragment, region: ReferenceRegion): (ReferenceRegion, String) = {
-      val merged = fragmentRegion.intersection(region)
+      val merged: ReferenceRegion = if(fragmentRegion.strand == Strand.INDEPENDENT) fragmentRegion.copy(strand = region.strand).intersection(region)
+        else fragmentRegion.intersection(region)
+
       val start = (merged.start - fragmentRegion.start).toInt
       val end = (merged.end - fragmentRegion.start).toInt
       val fragmentSequence: String = fragment.getSequence
@@ -120,9 +122,10 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
     val byRegion: RDD[(Option[ReferenceRegion], NucleotideContigFragment)] = fragments.rdd.keyBy(ReferenceRegion(_))
     val places: RDD[(ReferenceRegion, (ReferenceRegion, String))] = byRegion
         .flatMap{
-          case (Some(fragmentRegion), fragment) if  regions.exists(fragmentRegion.overlaps) =>
+          case (Some(fragmentRegion), fragment) =>
             regions.collect{
-              case region if fragmentRegion.overlaps(region) => (region, extractSequence(fragmentRegion, fragment, region))
+              case region if fragmentRegion.covers(region) && (fragmentRegion.strand == Strand.INDEPENDENT ||
+                fragmentRegion.strand == region.strand) => (region, extractSequence(fragmentRegion, fragment, region))
             }
           case _ => Nil
         }.sortByKey()
@@ -218,27 +221,23 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
   }
 
 
-  def extractTranscripts(features: FeatureRDD, transcripts: Set[String]): RDD[(String, String)] = {
+  def extractFeatures(features: FeatureRDD, featureType: FeatureType, ids: Set[String])
+                     (getId: Feature => String): RDD[(String, (ReferenceRegion, String))] = {
     val byRegions = features.rdd
-      .filter(f=>f.getFeatureType == FeatureType.Exon.entryName && transcripts.contains(f.getTranscriptId))
-      .map(t=>(t.region, t.getTranscriptId))
+      .filter(f=>f.getFeatureType == FeatureType.Exon.entryName && ids.contains(getId(f)))
+      .map(f=>(f.region, getId(f)))
       .persist(StorageLevel.MEMORY_AND_DISK)
+
     val regions: Set[ReferenceRegion] = byRegions.keys.collect().toSet
-    //Set(ReferenceRegion(test,0,30,FORWARD), ReferenceRegion(test,36,66,FORWARD), ReferenceRegion(test,72,102,FORWARD))
-    val strs: RDD[(ReferenceRegion, String)] = extractRegions(regions)
-    val s = strs.collect()
-    val br = byRegions.collect()
-    println("=====================")
-    println("FOUND STRS = ")
-    pprint.pprintln(s)
-    println("to join with--------------------")
-    pprint.pprintln(br)
-    val joined: RDD[(String, (ReferenceRegion, (String, String)))] = byRegions.join(strs).keyBy(_._2._1)
-    joined.groupByKey.mapValues {
+    byRegions.join(extractRegions(regions)).keyBy(_._2._1).mapValues{ case (r, (_, str)) => (r, str)}
+  }
+
+  def extractTranscripts(features: FeatureRDD, transcripts: Set[String]): RDD[(String, String)] = {
+    extractFeatures(features, FeatureType.Exon, transcripts)(f=>f.getTranscriptId).groupByKey.mapValues {
       iter =>
-        val sorted: Seq[(ReferenceRegion, (String, String))] = iter.toList.sortBy(l => l._1.start)
+        val sorted: Seq[(ReferenceRegion, String)] = iter.toList.sortBy(l => l._1.start)
         sorted.foldLeft("") {
-          case (acc, (_, (_, str))) => acc + str
+          case (acc, (_, str)) => acc + str
         }
     }
 

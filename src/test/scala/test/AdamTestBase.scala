@@ -15,7 +15,7 @@ import comp.bio.aging.playground.extensions._
 import org.apache.spark.SparkConf
 
 
-abstract class AdamTestBase extends  WordSpec with Matchers with DatasetSuiteBase {
+abstract class AdamTestBase extends  WordSpec with Matchers with SharedSparkContext/*DatasetSuiteBase*/ {
 
   val text: String =
     """
@@ -40,7 +40,7 @@ abstract class AdamTestBase extends  WordSpec with Matchers with DatasetSuiteBas
 
 
 
-  override implicit def enableHiveSupport: Boolean = false
+  //override implicit def enableHiveSupport: Boolean = false
 
   val dnas: Seq[String] = Vector(
     "ACAGCTGATCTCCAGATATGACCATGGGTT",
@@ -81,7 +81,7 @@ abstract class AdamTestBase extends  WordSpec with Matchers with DatasetSuiteBas
       .setExonId(exondId)
       .setFeatureType(featureType.entryName)
       .setContigName(contigName)
-      .setStrand(Strand.INDEPENDENT)
+      .setStrand(Strand.FORWARD)
       .clearAttributes()
       .build()
   }

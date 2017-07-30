@@ -17,9 +17,6 @@ class ExtendedFeaturesTest extends AdamTestBase {
 
   "extended features" should {
 
-    implicit val session = this.spark
-
-
     "extract features transcript" in {
 
       val dnas2 = Vector(
@@ -38,7 +35,6 @@ class ExtendedFeaturesTest extends AdamTestBase {
       val tfs = Seq(exon1, intron1, exon2, intron2, exon3)
       val features = FeatureRDD(sc.parallelize(tfs))
 
-      import session.implicits._
       val fs = features.toDF()
       val featureType: FeatureType = FeatureType.Exon
       val tp = featureType.entryName
@@ -58,36 +54,19 @@ class ExtendedFeaturesTest extends AdamTestBase {
           && fs("contigName") === frags("contigName")
           && fs("featureType") === tp
       )
-      //val j: Array[Row] = joined.collect()
-      //pprint.pprintln(j.toList.map(r=>r.toString()))
-      println("let us start grouping!")
-      /*
-      val grouped = joined.groupByKey{r=>
-          pprint.pprintln(r)
-          val t = r.getAs[String]("transcriptId")
-          println("==TTTT===")
-          println(t)
-          t
-      }
-      */
-      //println("FS SCHEMA----------------------")
-      //fs.printSchema()
-      //println("JOINED SCHEMA===============")
-     // joined.printSchema()
-      //val s = fs.select($"transcriptId")//.groupByKey(row=>row.getAs[String]("transcriptId"))
-      //pprint.pprintln(s)
-      //println("/////////////////////////////////////")
-      //pprint.pprintln(j.toList.map(r=>r.schema.toString()))
-      //println("-----------------------------------")
-      //println(grouped.count().count())
 
-      //val resultDataset= fragments.extractFeatures(features.toDF(), FeatureType.Exon, r => r.getAs[String]("transcriptId"))
-      //val result = resultDataset.collect.toSet
-      //pprint.pprintln(result)
-      //result.size shouldEqual(3)
+      val es = features.rdd.map(f=>f.getExonId).collect().toSet
+      val exons = fragments.extractFeatures(features, FeatureType.Exon, es)(f=>f.getExonId).mapValues(_._2).collect.toSet
+      exons shouldEqual Set(
+        "exon1" -> "ACAGCTGATCTCCAGATATGACCATGGGTT",
+        "exon2" -> "CAGCTGATCTCCAGATATGACCATGGGTTT",
+        "exon3" -> "CCAGAAGTTTGAGCCACAAACCCATGGTCA"
+      )
+
+
       val trs = features.rdd.map(f=>f.getTranscriptId).collect().toSet
-      val results = fragments.extractTranscripts(features, trs).collectAsMap().toMap
-      results shouldEqual Map( "transcript" ->  "ACAGCTGATCTCCAGATATGACCATGGGTTCAGCTGATCTCCAGATATGACCATGGGTTTCCAGAAGTTTGAGCCACAAACCCATGGTCA")
+      val transcripts: Map[String, String] = fragments.extractTranscripts(features, trs).collectAsMap().toMap
+      transcripts shouldEqual Map( "transcript" ->  "ACAGCTGATCTCCAGATATGACCATGGGTTCAGCTGATCTCCAGATATGACCATGGGTTTCCAGAAGTTTGAGCCACAAACCCATGGTCA")
     }
   }
 }
