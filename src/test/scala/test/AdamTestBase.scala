@@ -66,7 +66,10 @@ abstract class AdamTestBase extends  WordSpec with Matchers with SharedSparkCont
       .build()
   }
 
-  def makeFeature(sequence: String, start: Long,
+  import scala.collection.JavaConverters._
+
+  def makeFeature(sequence: String,
+                  start: Long,
                   contigName: String,
                   featureType: FeatureType,
                   geneId: String = "",
@@ -83,6 +86,7 @@ abstract class AdamTestBase extends  WordSpec with Matchers with SharedSparkCont
       .setContigName(contigName)
       .setStrand(Strand.FORWARD)
       .clearAttributes()
+      .setAttributes(Map(("gene_name", geneId)).asJava)
       .build()
   }
 

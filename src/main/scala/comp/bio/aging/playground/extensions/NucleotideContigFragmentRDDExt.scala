@@ -8,6 +8,7 @@ import org.bdgenomics.adam.models.{ReferenceRegion, _}
 import org.bdgenomics.adam.rdd.contig.NucleotideContigFragmentRDD
 import org.bdgenomics.adam.rdd.feature.FeatureRDD
 import org.bdgenomics.formats.avro._
+import comp.bio.aging.playground.extensions._
 
 import scala.collection.immutable._
 
@@ -224,7 +225,7 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
   def extractFeatures(features: FeatureRDD, featureType: FeatureType, ids: Set[String])
                      (getId: Feature => String): RDD[(String, (ReferenceRegion, String))] = {
     val byRegions = features.rdd
-      .filter(f=>f.getFeatureType == FeatureType.Exon.entryName && ids.contains(getId(f)))
+      .filter(f=>f.getFeatureType == featureType.entryName && ids.contains(getId(f)))
       .map(f=>(f.region, getId(f)))
       .persist(StorageLevel.MEMORY_AND_DISK)
 
@@ -243,7 +244,31 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
 
   }
 
+  def extractBeforeTranscripts(features: FeatureRDD,
+                    geneName: String,
+                    before: Long): RDD[(String, (ReferenceRegion, String))] =
+  {
+    val transcripts = features
+      .filterByGeneName(g=>g.toLowerCase == geneName.toLowerCase).rdd
+      .filter(f=> f.getFeatureType == FeatureType.Transcript.entryName)
 
+    val withRegion = transcripts.map{
+      case tr if tr.getStrand == Strand.REVERSE =>
+        val region = tr.region
+        region.copy(start = region.end, end = region.end + before) ->tr.getTranscriptId
+      case tr =>
+        val region = tr.region
+        region.copy(start = region.start - before, end = region.start)->tr.getTranscriptId
+    }
+    val regions = withRegion.keys.collect().toVector
+    val extracted = fragments.extractRegions(regions)
+
+    withRegion.join(extracted).map{
+      case (reg, (tr, seq)) => (tr, (reg, seq))
+    }
+  }
+
+/*
   def extractFeatures(featureFrame: DataFrame,
                       featureType: FeatureType,
                       getKey: Row => String)
@@ -282,5 +307,6 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
         //featureFrame(tp) == frags()
     ).orderBy($"fragment_start").groupByKey(getKey)
   }
+  */
 
 }
