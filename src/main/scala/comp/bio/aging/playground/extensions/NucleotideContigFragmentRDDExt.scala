@@ -245,6 +245,31 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
   }
 
   def extractBeforeTranscripts(features: FeatureRDD,
+                               geneNames: Set[String],
+                               before: Long): RDD[(String, scala.Iterable[(String, ReferenceRegion, String)])] =
+  {
+    val genes = geneNames.map(_.toLowerCase)
+    val transcripts = features
+      .filterByGeneName(g=>genes.contains(g.toLowerCase)).rdd
+      .filter(f=> f.getFeatureType == FeatureType.Transcript.entryName)
+
+    val withRegion = transcripts.map{
+      case tr if tr.getStrand == Strand.REVERSE =>
+        val region = tr.region
+        region.copy(start = region.end, end = region.end + before) -> (tr.getTranscriptId, tr.getAttributes.get("gene_name"))
+      case tr =>
+        val region = tr.region
+        region.copy(start = region.start - before, end = region.start)-> (tr.getTranscriptId, tr.getAttributes.get("gene_name"))
+    }
+    val regions = withRegion.keys.collect().toVector
+    val extracted = fragments.extractRegions(regions)
+
+    withRegion.join(extracted).map{
+      case (reg, ((tr, gene), seq)) => (gene, (tr, reg, seq))
+    }.groupByKey()
+  }
+
+  def extractBeforeTranscripts(features: FeatureRDD,
                     geneName: String,
                     before: Long): RDD[(String, (ReferenceRegion, String))] =
   {

@@ -131,6 +131,12 @@ class ExtendedFeaturesTest extends AdamTestBase {
       before.collect().toList shouldEqual List(
         ("transcript", (ReferenceRegion(test, 10L, 30L, Strand.FORWARD), "TCCAGATATGACCATGGGTT"))
       )
+      val before2: RDD[(String, Iterable[(String, ReferenceRegion, String)])] = fragments.extractBeforeTranscripts(features, Set("gene"), 20)
+      val map = before2.collectAsMap()
+      map.keySet shouldEqual Set("gene")
+      map.values.flatten.toList shouldEqual  List(
+        ("transcript", ReferenceRegion(test, 10L, 30L, Strand.FORWARD), "TCCAGATATGACCATGGGTT")
+      )
       //fragments.extractBefore(features, "gene", 10)
 
     }
