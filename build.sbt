@@ -1,5 +1,3 @@
-import com.typesafe.sbt.SbtNativePackager.autoImport._
-
 import sbt.Keys._
 
 import sbt._
@@ -8,7 +6,7 @@ name := "adam-playground"
 
 organization := "comp.bio.aging"
 
-scalaVersion :=  "2.11.11"
+scalaVersion :=  "2.11.12"
 
 coursierMaxIterations := 200
 
@@ -36,7 +34,7 @@ resolvers += sbt.Resolver.bintrayRepo("denigma", "denigma-releases")
 
 resolvers += "ICM repository" at "http://maven.icm.edu.pl/artifactory/repo"
 
-lazy val sparkVersion = "2.2.0"
+lazy val sparkVersion = "2.2.1"
 
 lazy val adamVersion = "0.23.0-SNAPSHOT"//"0.22.0"
 
@@ -44,7 +42,7 @@ lazy val utilsVersion = "0.2.13"
 
 lazy val enumeratumVersion = "1.5.12"
 
-lazy val pprintVersion = "0.5.2"
+lazy val pprintVersion = "0.5.3"
 
 libraryDependencies ++= Seq(
   
@@ -68,16 +66,13 @@ libraryDependencies ++= Seq(
 
   "org.bdgenomics.utils" %% "utils-misc" % utilsVersion % Test,
 
-  "org.scalatest" %% "scalatest" % "3.0.3" % Test,
+  "org.scalatest" %% "scalatest" % "3.0.4" % Test,
 
-  "com.holdenkarau" %% "spark-testing-base" % "2.2.0_0.7.2" % Test,
+  "com.holdenkarau" %% "spark-testing-base" % "2.2.0_0.8.0" % Test,
 
-  "org.scalacheck" %% "scalacheck" % "1.13.5" % Test,
-
-  "com.lihaoyi" % "ammonite" % "1.0.1" % Test cross CrossVersion.full
+  "org.scalacheck" %% "scalacheck" % "1.13.5" % Test
 
 )
-
 
 initialCommands in (Test, console) := """ammonite.Main().run()"""
 
@@ -89,16 +84,8 @@ fork in run := true
 
 parallelExecution in Test := false
 
-maintainer := "Anton Kulaga <antonkulaga@gmail.com>"
-
-packageSummary := "adam-playground"
-
-packageDescription := """Adam"""
-
 bintrayRepository := "main"
 
 bintrayOrganization := Some("comp-bio-aging")
 
 licenses += ("MPL-2.0", url("http://opensource.org/licenses/MPL-2.0"))
-
-enablePlugins(JavaAppPackaging)

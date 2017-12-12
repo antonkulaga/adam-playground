@@ -37,5 +37,5 @@ add the following to you build.sbt
 
 ```sbt
 resolvers += sbt.Resolver.bintrayRepo("comp-bio-aging", "main")
-libraryDependencies += "comp.bio.aging" %% "adam-playground" % "0.0.3"
+libraryDependencies += "comp.bio.aging" %% "adam-playground" % "0.0.7-SNAP6.6"
 ```

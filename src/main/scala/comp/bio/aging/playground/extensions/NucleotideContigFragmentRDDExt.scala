@@ -256,16 +256,18 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
     val withRegion = transcripts.map{
       case tr if tr.getStrand == Strand.REVERSE =>
         val region = tr.region
-        region.copy(start = region.end, end = region.end + before) -> (tr.getTranscriptId, tr.getAttributes.get("gene_name"))
+        region.copy(start = region.end, end = region.end + before, strand = Strand.INDEPENDENT) ->
+          (tr.getTranscriptId, tr.getAttributes.get("gene_name"), region.strand)
       case tr =>
         val region = tr.region
-        region.copy(start = region.start - before, end = region.start)-> (tr.getTranscriptId, tr.getAttributes.get("gene_name"))
+        region.copy(start = region.start - before, end = region.start, strand = Strand.INDEPENDENT)->
+          (tr.getTranscriptId, tr.getAttributes.get("gene_name"), region.strand)
     }
     val regions = withRegion.keys.collect().toVector
     val extracted = fragments.extractRegions(regions)
 
     withRegion.join(extracted).map{
-      case (reg, ((tr, gene), seq)) => (gene, (tr, reg, seq))
+      case (reg, ((tr, gene, strand), seq)) => (gene, (tr, reg.copy(strand = strand), seq))
     }.groupByKey()
   }
 
@@ -280,16 +282,17 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
     val withRegion = transcripts.map{
       case tr if tr.getStrand == Strand.REVERSE =>
         val region = tr.region
-        region.copy(start = region.end, end = region.end + before) ->tr.getTranscriptId
+        region.copy(start = region.end, end = region.end + before, strand = Strand.INDEPENDENT) -> (tr.getTranscriptId, region.strand)
       case tr =>
         val region = tr.region
-        region.copy(start = region.start - before, end = region.start)->tr.getTranscriptId
+        region.copy(start = region.start - before, end = region.start, strand = Strand.INDEPENDENT)-> (tr.getTranscriptId, region.strand)
     }
     val regions = withRegion.keys.collect().toVector
-    val extracted = fragments.extractRegions(regions)
+
+    val extracted: RDD[(ReferenceRegion, String)] = fragments.extractRegions(regions)
 
     withRegion.join(extracted).map{
-      case (reg, (tr, seq)) => (tr, (reg, seq))
+      case (reg, ((tr, strand), seq)) => (tr, (reg.copy(strand = strand), seq))
     }
   }
 
