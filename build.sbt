@@ -36,7 +36,7 @@ resolvers += "ICM repository" at "http://maven.icm.edu.pl/artifactory/repo"
 
 lazy val sparkVersion = "2.2.1"
 
-lazy val adamVersion = "0.23.0-SNAPSHOT"//"0.22.0"
+lazy val adamVersion = "0.23.0"
 
 lazy val utilsVersion = "0.2.13"
 
@@ -63,6 +63,8 @@ libraryDependencies ++= Seq(
   "com.beachape" %% "enumeratum" % enumeratumVersion,
 
   "com.lihaoyi" %% "pprint" % pprintVersion,
+
+  "com.github.guillaumedd" %% "gstlib" % "0.1.2",
 
   "org.bdgenomics.utils" %% "utils-misc" % utilsVersion % Test,
 

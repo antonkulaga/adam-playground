@@ -30,7 +30,7 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
     }
   }
 
-  def splitByCoverage(features2: FeatureRDD) = {
+  def splitByCoverage(features2: FeatureRDD): (NucleotideContigFragmentRDD, NucleotideContigFragmentRDD) = {
     val joined = fragments.leftOuterShuffleRegionJoin(features2).rdd.cache()
     val notCovered = joined.filter{
       case (f, None) => true
@@ -172,7 +172,7 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
     features.filterByContainedRegions(regions)
   }
 
-  def filterByContigNames(filterFun: String => Boolean): Unit ={
+  def filterByContigNames(filterFun: String => Boolean): NucleotideContigFragmentRDD ={
     fragments
       .transform(rdd=>rdd.filter(c=>filterFun(c.getContigName)))
       .transformSequences{ case s if filterFun(s.name) => s }
@@ -185,7 +185,7 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
   }
 
 
-  def mergeFeatures(key: String, iter: Iterator[Row]) = {
+  def mergeFeatures(key: String, iter: Iterator[Row]): (String, String) = {
     val sorted = iter.toList.sortBy(r=>r.getAs[Long]("fragment_start"))
     val sequence = iter.toList match {
       case head::Nil =>
@@ -294,6 +294,10 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
     withRegion.join(extracted).map{
       case (reg, ((tr, strand), seq)) => (tr, (reg.copy(strand = strand), seq))
     }
+  }
+
+  def filterByStrings(strings: Set[String]): NucleotideContigFragmentRDD = {
+    fragments.transform(rdd=>rdd.filter(f=>strings.contains(f.getSequence)))
   }
 
 /*

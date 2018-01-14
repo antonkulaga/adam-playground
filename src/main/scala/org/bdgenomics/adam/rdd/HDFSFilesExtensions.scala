@@ -48,7 +48,7 @@ trait HDFSFilesExtensions {
   import org.apache.hadoop.conf.Configuration
   import org.apache.hadoop.fs._
 
-  def merge(srcPath: String, dstPath: String): Unit =  {
+  def merge(srcPath: String, dstPath: String): Boolean =  {
     val hadoopConfig = new Configuration()
     val hdfs = FileSystem.get(hadoopConfig)
     FileUtil.copyMerge(hdfs, new Path(srcPath), hdfs, new Path(dstPath), true, hadoopConfig, null)

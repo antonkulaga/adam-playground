@@ -15,7 +15,7 @@ import comp.bio.aging.playground.extensions.stringSeqExtensions._
   */
 class NucleotideContigFragmentExt(val fragment: NucleotideContigFragment) extends AnyVal{
 
-  def regionOpt = ReferenceRegion(fragment)
+  def regionOpt: Option[ReferenceRegion] = ReferenceRegion(fragment)
 
   def hasRegion: Boolean = regionOpt.isDefined
 
