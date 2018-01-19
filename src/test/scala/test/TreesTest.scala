@@ -5,7 +5,7 @@ import java.net.URL
 import com.holdenkarau.spark.testing.SharedSparkContext
 import comp.bio.aging.playground.extensions._
 import comp.bio.aging.playground.extensions.stringSeqExtensions._
-import comp.bio.aging.playground.trees.SimpleTree
+import comp.bio.aging.playground.extras.trees.SimpleTree
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.Dataset
 import org.bdgenomics.adam.models.{ReferenceRegion, SequenceDictionary, SequenceRecord}

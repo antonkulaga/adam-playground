@@ -12,13 +12,14 @@ import org.apache.spark.rdd.MetricsContext._
 import org.bdgenomics.adam.rdd.feature.FeatureRDD
 import org.bdgenomics.adam.rdd.ADAMContext._
 import org.bdgenomics.formats.avro.Feature
-
+import org.apache.spark.sql.{DataFrame, Encoders, SparkSession}
+import org.apache.spark.sql.types.StructType
 /**
   * Created by antonkulaga on 3/27/17.
   */
-object ADAMContextExtensions {
+object ADAMContextExtensions extends ReadExtensions {
 
-  implicit class spExt(val sparkContext: SparkContext) extends HDFSFilesExtensions{
+  implicit class spExt(val sparkContext: SparkContext) extends HDFSFilesExtensions {
 
     def loadFastaPersistent(
                    filePath: String,
@@ -58,6 +59,7 @@ object ADAMContextExtensions {
     }
 
   }
+
 
 
 }

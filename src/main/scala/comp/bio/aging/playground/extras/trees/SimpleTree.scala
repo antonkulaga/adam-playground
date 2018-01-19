@@ -1,4 +1,4 @@
-package comp.bio.aging.playground.trees
+package comp.bio.aging.playground.extras.trees
 
 import gstlib.GeneralizedSuffixTree
 import org.apache.spark.rdd.RDD
