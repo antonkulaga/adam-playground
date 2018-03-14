@@ -28,11 +28,15 @@ updateOptions := updateOptions.value.withCachedResolution(true) //to speed up de
 
 resolvers += Resolver.mavenLocal
 
+resolvers += Resolver.sonatypeRepo("releases")
+
 resolvers += sbt.Resolver.bintrayRepo("comp-bio-aging", "main")
 
 resolvers += sbt.Resolver.bintrayRepo("denigma", "denigma-releases")
 
 resolvers += "ICM repository" at "http://maven.icm.edu.pl/artifactory/repo"
+
+resolvers += "jitpack.io" at "https://jitpack.io"
 
 lazy val sparkVersion = "2.2.1"
 
@@ -43,6 +47,9 @@ lazy val utilsVersion = "0.2.13"
 lazy val enumeratumVersion = "1.5.12"
 
 lazy val pprintVersion = "0.5.3"
+
+
+val framelessVersion = "0.4.0"
 
 libraryDependencies ++= Seq(
   
@@ -72,8 +79,23 @@ libraryDependencies ++= Seq(
 
   "com.holdenkarau" %% "spark-testing-base" % "2.2.0_0.8.0" % Test,
 
-  "org.scalacheck" %% "scalacheck" % "1.13.5" % Test
+  "org.scalacheck" %% "scalacheck" % "1.13.5" % Test,
 
+  "org.typelevel" %% "frameless-cats"      % framelessVersion % Test,
+
+  "org.typelevel" %% "frameless-dataset"   % framelessVersion % Test,
+
+  "org.typelevel" %% "frameless-ml"      % framelessVersion % Test,
+
+  "net.sansa-stack" %% "sansa-rdf-spark-bundle" % "0.3.0" % Test,
+
+  "net.sansa-stack" %% "sansa-query-spark-bundle" % "0.3.0" % Test,
+
+  "net.sansa-stack" %% "sansa-owl-spark" % "0.3.0" % Test,
+
+  "org.apache.hadoop" % "hadoop-azure" % "2.7.5" % Test,
+
+  "com.microsoft.azure" % "azure-storage" % "7.0.0" % Test
 )
 
 initialCommands in (Test, console) := """ammonite.Main().run()"""
@@ -91,3 +113,13 @@ bintrayRepository := "main"
 bintrayOrganization := Some("comp-bio-aging")
 
 licenses += ("MPL-2.0", url("http://opensource.org/licenses/MPL-2.0"))
+
+libraryDependencies += "com.lihaoyi" % "ammonite" % "1.0.3-39-9db2c21" % Test cross CrossVersion.full
+
+sourceGenerators in Test += Def.task {
+  val file = (sourceManaged in Test).value / "amm.scala"
+  IO.write(file, """object amm extends App { ammonite.Main.main(args) }""")
+  Seq(file)
+}.taskValue
+
+libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.4.0" % Test

@@ -35,7 +35,7 @@ case object ProteinPrediction {
     val start::end::Nil = span.split('-').map(_.toLong).toList
     val score = score_string.substring(score_string.indexOf('=') + 1).toDouble
     ProteinPrediction(
-      transcript, id, sequence, orf_type, score, start, end, len, strand, diamondHits, pfamHits, contigName
+      transcript, id, sequence, orf_type, score, start, end, len, strand, diamondHits, pfamHits, gene, contigName
     )
   }
 }
@@ -50,8 +50,6 @@ case class ProteinPrediction(transcript: String,
                              strand: Char,
                              diamondHits: List[BlastResult],
                              pfamHits: List[PfamResult],
+                             gene: String,
                              contigName: String
-                            ){
-  //def full_id() = s"${gene}::${transcript}::${rest}"
-}
-  //Gene.10640::c10000_g1_i2::g.10640::m.10640
+                            )

@@ -15,14 +15,14 @@ Now it is possible to:
 * coverage search
 
 NucleotideContig Extensions
------------------
+---------------------------
 
 * search in the genome
 * search by feature
 * region extraction from the fragment
 * extract multiple regions at once
 * extract by string matching
-* filter by overlaping features
+* filter by overlapping features
 
 String extensions
 -----------------
@@ -37,5 +37,5 @@ add the following to you build.sbt
 
 ```sbt
 resolvers += sbt.Resolver.bintrayRepo("comp-bio-aging", "main")
-libraryDependencies += "comp.bio.aging" %% "adam-playground" % "0.0.8"
+libraryDependencies += "comp.bio.aging" %% "adam-playground" % "0.0.10"
 ```

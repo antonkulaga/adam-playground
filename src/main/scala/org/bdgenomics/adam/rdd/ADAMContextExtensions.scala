@@ -12,12 +12,18 @@ import org.apache.spark.rdd.MetricsContext._
 import org.bdgenomics.adam.rdd.feature.FeatureRDD
 import org.bdgenomics.adam.rdd.ADAMContext._
 import org.bdgenomics.formats.avro.Feature
-import org.apache.spark.sql.{DataFrame, Encoders, SparkSession}
+import org.apache.spark.sql._
 import org.apache.spark.sql.types.StructType
 /**
   * Created by antonkulaga on 3/27/17.
   */
 object ADAMContextExtensions extends ReadExtensions {
+
+  implicit class DataFrameExtensions(dataFrame: DataFrame) {
+
+    def writeTSV(path: String, header: Boolean = true, sep: String = "\t"): Unit =
+      dataFrame.write.option("sep", sep).option("header",header).csv(path)
+  }
 
   implicit class spExt(val sparkContext: SparkContext) extends HDFSFilesExtensions {
 
@@ -58,8 +64,9 @@ object ADAMContextExtensions extends ReadExtensions {
         Some(merged)
     }
 
+    def joinDataFrames(dfs: Seq[DataFrame], fields: Seq[String], joinType: String = "inner"): DataFrame = {
+        dfs.reduce((a, b)=> a.join(b, fields, joinType))
+      }
   }
-
-
 
 }

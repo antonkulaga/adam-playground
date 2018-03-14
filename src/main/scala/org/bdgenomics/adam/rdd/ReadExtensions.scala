@@ -1,5 +1,7 @@
 package org.bdgenomics.adam.rdd
 
+import org.apache.spark.sql.Dataset
+
 trait ReadExtensions {
   import org.apache.spark.SparkContext
   import org.apache.spark.sql.{DataFrame, Encoders, SparkSession}
@@ -17,7 +19,7 @@ trait ReadExtensions {
       .csv(path)
 
     def readTypedTSV[T <: Product](path: String, header: Boolean = false, sep: String = "\t")
-                                  (implicit tag: TypeTag[T]) = {
+                                  (implicit tag: TypeTag[T]): Dataset[T] = {
       val encoder: StructType = Encoders.product[T](tag).schema
       session.read
         .option("sep", sep)

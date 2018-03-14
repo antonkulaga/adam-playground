@@ -25,6 +25,14 @@ package comp.bio.aging.playground.extras.uniprot
 21. Ensembl_PRO
 22. Additional PubMed
   */
+
+object UniprotMapping {
+
+  val headers = List("uniprot_ac", "uniprot_id", "entrez", "refSeq", "gi", "pdb", "go",
+    "uniref100", "uniref90", "uniref50", "uniparc", "pir",
+    "taxon", "mim", "unigene", "pubmed", "embl", "embl_cds",
+    "ensembl", "ensembl_trs", "ensembl_pro", "additional_pubmed")
+}
 case class UniprotMapping(
                            uniprot_ac: String,
                            uniprot_id: String,
