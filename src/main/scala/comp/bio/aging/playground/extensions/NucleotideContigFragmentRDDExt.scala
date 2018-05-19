@@ -8,12 +8,12 @@ import org.bdgenomics.adam.models.{ReferenceRegion, _}
 import org.bdgenomics.adam.rdd.contig.NucleotideContigFragmentRDD
 import org.bdgenomics.adam.rdd.feature.FeatureRDD
 import org.bdgenomics.formats.avro._
-import comp.bio.aging.playground.extensions._
 
 import scala.collection.immutable._
 
 
-class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD) extends AnyVal {
+class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD) extends Serializable//AnyVal
+{
 
   def transformSequences(collectFunction: PartialFunction[SequenceRecord, SequenceRecord]): NucleotideContigFragmentRDD = {
     val newDic = new SequenceDictionary(fragments.sequences.records.collect(collectFunction))
@@ -23,9 +23,9 @@ class NucleotideContigFragmentRDDExt(val fragments: NucleotideContigFragmentRDD)
   def getTotalLength: Double = fragments.rdd.map(f=>f.region.length()).sum()
 
   def coveredByFeatures(featureRDD: FeatureRDD): NucleotideContigFragmentRDD = {
-    fragments.transform{rdd=>
+    fragments.transform{ _ =>
       fragments.broadcastRegionJoin(featureRDD).rdd.filter{
-      case (fragment, feature) => feature.region.covers(fragment.region)
+      case (fragment, feature) => new  FeatureExt(feature).region.covers(fragment.region)
       }.keys.distinct()
     }
   }

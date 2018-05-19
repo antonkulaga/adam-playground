@@ -34,7 +34,7 @@ abstract class AdamTestBase extends  WordSpec with Matchers with SharedSparkCont
       set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").
       set("spark.kryo.registrator", "org.bdgenomics.adam.serialization.ADAMKryoRegistrator").
       set("spark.kryoserializer.buffer", "16m").
-      set("spark.kryoserializer.buffer.max.mb", "1024").
+      set("spark.kryoserializer.buffer.max", "1024mb").
       set("spark.kryo.referenceTracking", "true")
   }
 

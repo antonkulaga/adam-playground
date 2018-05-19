@@ -1,17 +1,12 @@
 package comp.bio.aging.playground.extensions
 
-import org.apache.spark
 import org.apache.spark.rdd.RDD
 import org.bdgenomics.adam.models._
-import org.bdgenomics.adam.rdd.contig.NucleotideContigFragmentRDD
 import org.bdgenomics.adam.rdd.feature.FeatureRDD
 import org.bdgenomics.formats.avro._
 
-import scala.collection.JavaConverters._
-import org.bdgenomics.adam.rdd.ADAMContext._
-import org.bdgenomics.adam.rdd.GenomicRDD
-
 import scala.Iterable
+import scala.collection.JavaConverters._
 import scala.collection.immutable._
 
 /**

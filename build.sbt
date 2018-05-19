@@ -38,9 +38,9 @@ resolvers += "ICM repository" at "http://maven.icm.edu.pl/artifactory/repo"
 
 resolvers += "jitpack.io" at "https://jitpack.io"
 
-lazy val sparkVersion = "2.2.1"
+lazy val sparkVersion = "2.3.0"
 
-lazy val adamVersion = "0.23.0"
+lazy val adamVersion = "0.24.0"
 
 lazy val utilsVersion = "0.2.13"
 
@@ -48,16 +48,15 @@ lazy val enumeratumVersion = "1.5.12"
 
 lazy val pprintVersion = "0.5.3"
 
-
-val framelessVersion = "0.4.0"
+val framelessVersion = "0.6.1"
 
 libraryDependencies ++= Seq(
-  
+
   "org.apache.spark" %% "spark-core" % sparkVersion,
 
   "org.apache.spark" %% "spark-sql" % sparkVersion,
 
-  "org.apache.spark" %% "spark-hive" % sparkVersion,
+  "org.apache.spark" %% "spark-mllib" % sparkVersion,
 
   "org.bdgenomics.adam" %% "adam-core-spark2" % adamVersion,
 
@@ -77,7 +76,7 @@ libraryDependencies ++= Seq(
 
   "org.scalatest" %% "scalatest" % "3.0.4" % Test,
 
-  "com.holdenkarau" %% "spark-testing-base" % "2.2.0_0.8.0" % Test,
+  "com.holdenkarau" %% "spark-testing-base" % "2.3.0_0.9.0" % Test,
 
   "org.scalacheck" %% "scalacheck" % "1.13.5" % Test,
 
@@ -86,12 +85,6 @@ libraryDependencies ++= Seq(
   "org.typelevel" %% "frameless-dataset"   % framelessVersion % Test,
 
   "org.typelevel" %% "frameless-ml"      % framelessVersion % Test,
-
-  "net.sansa-stack" %% "sansa-rdf-spark-bundle" % "0.3.0" % Test,
-
-  "net.sansa-stack" %% "sansa-query-spark-bundle" % "0.3.0" % Test,
-
-  "net.sansa-stack" %% "sansa-owl-spark" % "0.3.0" % Test,
 
   "org.apache.hadoop" % "hadoop-azure" % "2.7.5" % Test,
 
