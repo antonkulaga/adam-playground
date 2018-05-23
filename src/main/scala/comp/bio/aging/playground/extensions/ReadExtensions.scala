@@ -1,12 +1,10 @@
-package org.bdgenomics.adam.rdd
+package comp.bio.aging.playground.extensions
 
 import org.apache.spark.sql.Dataset
 
 trait ReadExtensions {
-  import org.apache.spark.SparkContext
-  import org.apache.spark.sql.{DataFrame, Encoders, SparkSession}
   import org.apache.spark.sql.types.StructType
-
+  import org.apache.spark.sql.{DataFrame, Encoders, SparkSession}
 
   import scala.reflect.runtime.universe._
 

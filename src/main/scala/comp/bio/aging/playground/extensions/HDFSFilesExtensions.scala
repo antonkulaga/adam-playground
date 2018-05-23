@@ -1,9 +1,8 @@
-package org.bdgenomics.adam.rdd
+package comp.bio.aging.playground.extensions
 
 import org.apache.spark.SparkContext
-import org.bdgenomics.adam.rdd.feature.FeatureRDD
 import org.bdgenomics.adam.rdd.ADAMContext._
-import comp.bio.aging.playground.extensions._
+import org.bdgenomics.adam.rdd.feature.FeatureRDD
 /**
   * Adds HDFS-related features
   */
@@ -12,7 +11,7 @@ trait HDFSFilesExtensions {
   def sparkContext: SparkContext
 
   def openFolder(where: String): (List[String], List[String]) = {
-    import  org.apache.hadoop.fs._
+    import org.apache.hadoop.fs._
     val hadoopConfig = sparkContext.hadoopConfiguration
     val fs = FileSystem.get( hadoopConfig )
     val pathes = fs.listStatus(new Path(where)).toList
@@ -23,7 +22,7 @@ trait HDFSFilesExtensions {
   }
 
   def openFolderRecursive(where: String): List[String] = {
-    import  org.apache.hadoop.fs._
+    import org.apache.hadoop.fs._
     val hadoopConfig = sparkContext.hadoopConfiguration
     val fs = FileSystem.get( hadoopConfig )
     val pathes = fs.listStatus(new Path(where)).toList
