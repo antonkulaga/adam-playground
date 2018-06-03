@@ -2,8 +2,12 @@ package comp.bio.aging.playground
 
 import org.apache.spark
 import org.apache.spark.SparkContext
+import org.apache.spark.ml.linalg.Matrix
+import org.apache.spark.ml.stat.Correlation
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{ColumnName, DataFrame, Row}
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.storage.StorageLevel
 import org.bdgenomics.adam.models._
 import org.bdgenomics.adam.rdd.contig.NucleotideContigFragmentRDD
 import org.bdgenomics.adam.rdd.feature.FeatureRDD
@@ -13,7 +17,7 @@ import org.bdgenomics.adam.rdd.ADAMContext._
 /**
   * Extensions for standard ADAM classes
   */
-package object extensions  extends ReadExtensions {
+package object extensions  extends ReadExtensions with DataFrameExtensions {
 
   implicit def nucleotideContigFragmentRDDExtended(fragments: NucleotideContigFragmentRDD): NucleotideContigFragmentRDDExt = new NucleotideContigFragmentRDDExt(fragments)
   implicit def featuresRDDExtended(features: FeatureRDD): FeatureRDDExt = new FeatureRDDExt(features)
@@ -21,11 +25,7 @@ package object extensions  extends ReadExtensions {
   implicit def nucleotideContigFragmentExtended(fragment: NucleotideContigFragment): NucleotideContigFragmentExt = new NucleotideContigFragmentExt(fragment)
   implicit def featuresExtended(feature: Feature): FeatureExt = new FeatureExt(feature)
 
-  implicit class DataFrameExtensions(dataFrame: DataFrame) {
 
-    def writeTSV(path: String, header: Boolean = true, sep: String = "\t"): Unit =
-      dataFrame.write.option("sep", sep).option("header",header).csv(path)
-  }
 
   implicit class spExt(val sparkContext: SparkContext) extends HDFSFilesExtensions {
 
