@@ -44,7 +44,7 @@ lazy val adamVersion = "0.24.0"
 
 lazy val utilsVersion = "0.2.13"
 
-lazy val enumeratumVersion = "1.5.12"
+lazy val enumeratumVersion = "1.5.13"
 
 lazy val pprintVersion = "0.5.3"
 
@@ -74,11 +74,11 @@ libraryDependencies ++= Seq(
 
   "org.bdgenomics.utils" %% "utils-misc" % utilsVersion % Test,
 
-  "org.scalatest" %% "scalatest" % "3.0.4" % Test,
+  "org.scalatest" %% "scalatest" % "3.0.5" % Test,
 
   "com.holdenkarau" %% "spark-testing-base" % "2.3.0_0.9.0" % Test,
 
-  "org.scalacheck" %% "scalacheck" % "1.13.5" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.14.0" % Test,
 
   "org.typelevel" %% "frameless-cats"      % framelessVersion % Test,
 
@@ -86,7 +86,7 @@ libraryDependencies ++= Seq(
 
   "org.typelevel" %% "frameless-ml"      % framelessVersion % Test,
 
-  "org.apache.hadoop" % "hadoop-azure" % "2.7.5" % Test,
+  "org.apache.hadoop" % "hadoop-azure" % "2.7.6" % Test,
 
   "com.microsoft.azure" % "azure-storage" % "7.0.0" % Test
 )
@@ -107,7 +107,7 @@ bintrayOrganization := Some("comp-bio-aging")
 
 licenses += ("MPL-2.0", url("http://opensource.org/licenses/MPL-2.0"))
 
-libraryDependencies += "com.lihaoyi" % "ammonite" % "1.0.3-39-9db2c21" % Test cross CrossVersion.full
+libraryDependencies += "com.lihaoyi" % "ammonite" % "1.1.2" % Test cross CrossVersion.full
 
 sourceGenerators in Test += Def.task {
   val file = (sourceManaged in Test).value / "amm.scala"
