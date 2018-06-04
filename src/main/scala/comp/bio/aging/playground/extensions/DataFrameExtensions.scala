@@ -1,6 +1,5 @@
 package comp.bio.aging.playground.extensions
 
-import org.apache.avro.generic.GenericData.StringType
 import org.apache.spark.ml.linalg.Matrix
 import org.apache.spark.ml.stat.Correlation
 import org.apache.spark.sql.{ColumnName, DataFrame, Row, SparkSession}

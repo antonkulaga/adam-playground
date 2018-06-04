@@ -29,28 +29,6 @@ package object extensions  extends ReadExtensions with DataFrameExtensions {
 
   implicit class spExt(val sparkContext: SparkContext) extends HDFSFilesExtensions {
 
-    /*
-  def loadFastaPersistent(
-                 filePath: String,
-                 fragmentLength: Long = 10000L): NucleotideContigFragmentRDD = {
-    val fastaData: RDD[(LongWritable, Text)] = sparkContext.newAPIHadoopFile(
-      filePath,
-      classOf[TextInputFormat],
-      classOf[LongWritable],
-      classOf[Text]
-    )
-    if (Metrics.isRecording) fastaData.instrument() else fastaData
-
-    val remapData = fastaData.map(kv => (kv._1.get, kv._2.toString))
-
-    // convert rdd and cache
-    val fragmentRdd = FastaConverter(remapData, fragmentLength)
-      .persist(StorageLevels.MEMORY_AND_DISK)
-
-    NucleotideContigFragmentRDD(fragmentRdd)
-  }
-
-  */
     def mergeFeatures(features: List[FeatureRDD]): Option[FeatureRDD] = features match {
       case Nil => None
       case head :: Nil => Some(head)

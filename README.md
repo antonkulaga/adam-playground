@@ -30,6 +30,12 @@ String extensions
 * several helper method to deal with DNA
 * several methods for text search
 
+DataFrame extensions
+--------------------
+
+Functions to run correlations and get normal DataFrame as a result (not Matrix)
+Ranks computations for dataframe
+
 Adding to dependencies
 ======================
 
@@ -37,5 +43,5 @@ add the following to you build.sbt
 
 ```sbt
 resolvers += sbt.Resolver.bintrayRepo("comp-bio-aging", "main")
-libraryDependencies += "comp.bio.aging" %% "adam-playground" % "0.0.12"
+libraryDependencies += "comp.bio.aging" %% "adam-playground" % "0.0.13"
 ```

@@ -115,4 +115,4 @@ sourceGenerators in Test += Def.task {
   Seq(file)
 }.taskValue
 
-libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.4.0" % Test
+libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.5.0" % Test
