@@ -10,7 +10,7 @@ scalaVersion :=  "2.11.12"
 
 coursierMaxIterations := 200
 
-isSnapshot := true
+isSnapshot := false
 
 scalacOptions ++= Seq( "-target:jvm-1.8", "-feature", "-language:_" )
 
@@ -116,3 +116,13 @@ sourceGenerators in Test += Def.task {
 }.taskValue
 
 libraryDependencies += "com.github.pathikrit" %% "better-files" % "3.5.0" % Test
+
+assemblyMergeStrategy in assembly := {
+  case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first
+  case PathList(ps @ _*) if ps.last endsWith ".html" => MergeStrategy.first
+  case "application.conf"                            => MergeStrategy.concat
+  case "unwanted.txt"                                => MergeStrategy.discard
+  case x =>
+    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    oldStrategy(x)
+}

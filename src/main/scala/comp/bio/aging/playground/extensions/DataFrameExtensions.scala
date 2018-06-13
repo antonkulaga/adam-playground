@@ -1,5 +1,6 @@
 package comp.bio.aging.playground.extensions
 
+import org.apache.spark.ml.feature.PCAModel
 import org.apache.spark.ml.linalg.Matrix
 import org.apache.spark.ml.stat.Correlation
 import org.apache.spark.sql.{ColumnName, DataFrame, Row, SparkSession}
@@ -23,7 +24,7 @@ trait DataFrameExtensions {
       case (f, n)=> f.rank(n, rankSuffix)
     }
 
-    def toVectors(columns: Seq[String], output: String) = {
+    def toVectors(columns: Seq[String], output: String): DataFrame = {
       import org.apache.spark.ml.feature.VectorAssembler
       import org.apache.spark.ml.linalg.Vectors
 
@@ -31,8 +32,26 @@ trait DataFrameExtensions {
         .setInputCols(columns.toArray)
         .setOutputCol(output)
 
-      assembler.transform(dataFrame.na.fill(0.0, columns).na.fill("")).select(output)
+      assembler.transform(dataFrame.na.fill(0.0, columns).na.fill(0.0)).select(output)
     }
+
+    import org.apache.spark.ml.feature.PCA
+    import org.apache.spark.ml.linalg.Vectors
+    def fitPCA(columns: Seq[String], k: Int)(implicit sparkSession: SparkSession): PCAModel = {
+      val df = dataFrame.toVectors(columns, "features")
+      new PCA()
+        .setInputCol("features")
+        .setOutputCol("PCA")
+        .setK(k)
+        .fit(df)
+    }
+
+
+    def doPCA(columns: Seq[String], k: Int)(implicit sparkSession: SparkSession): DataFrame = {
+      val pca = dataFrame.fitPCA(columns, k)
+      pca.transform(dataFrame)
+    }
+
 
     protected def convertCorrellationMatrix(matrix: Matrix, columns: Seq[String]) = {
       require(columns.size == matrix.numCols)
@@ -66,6 +85,13 @@ trait DataFrameExtensions {
       val df = Correlation.corr(cor, "features", method = "spearman")
       transformCorrellationMatrix(df, columns)
     }
+
+    def rename(renamings: Map[String, String]) =   {
+      val newColumns = dataFrame.columns.map(c=> renamings.getOrElse(c, c))
+      dataFrame.toDF(newColumns:_*)
+    }
+
+
   }
 
 }
